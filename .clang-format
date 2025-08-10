@@ -1,6 +1,7 @@
 BasedOnStyle: WebKit
 AllowShortFunctionsOnASingleLine: false
 ColumnLimit: 100
+SortIncludes: false
 ReflowComments: false
 AllowShortBlocksOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
