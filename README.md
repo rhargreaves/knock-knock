@@ -1,4 +1,6 @@
 # Knock Knock :punch::punch::door:
+[![build](https://github.com/rhargreaves/knock-knock/actions/workflows/build.yml/badge.svg)](https://github.com/rhargreaves/knock-knock/actions/workflows/build.yml)
+
 Port knocking implementation in eBPF
 
 ## Getting Started
