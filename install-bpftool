@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+git clone --recurse-submodules https://github.com/libbpf/bpftool.git
+cd bpftool/src
+sudo -E make install
+cd ../..
+rm -rf bpftool

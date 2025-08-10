@@ -1,7 +1,11 @@
 {
 	"name": "Alpine",
 	"image": "mcr.microsoft.com/devcontainers/base:alpine-3.20",
-	"postCreateCommand": "sudo apk add --no-cache build-base clang clang-dev",
+	"postCreateCommand": {
+		"apks": "sudo apk add --no-cache build-base clang clang-dev libelf zlib linux-tools elfutils-dev linux-headers libc-dev llvm16",
+		"llvm-path": "echo 'export PATH=/usr/lib/llvm16/bin:$PATH' >> ~/.zshrc",
+		"install-bpftool": "sudo sh install-bpftool"
+	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
