@@ -1,5 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 set -e
+
+if [ -f /usr/local/bin/bpftool ]; then
+    echo "bpftool is already installed"
+    exit 0
+fi
+
+if [ -d bpftool ]; then
+    rm -rf bpftool
+fi
 
 git clone --recurse-submodules https://github.com/libbpf/bpftool.git
 cd bpftool/src
