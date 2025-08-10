@@ -1,0 +1,13 @@
+{
+	"name": "Alpine",
+	"image": "mcr.microsoft.com/devcontainers/base:alpine-3.20",
+	"postCreateCommand": "sudo apk add --no-cache build-base clang clang-dev",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"anysphere.cpptools",
+				"llvm-vs-code-extensions.vscode-clangd"
+			]
+		}
+	}
+}
