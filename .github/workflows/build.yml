@@ -1,0 +1,19 @@
+name: build
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build in dev container
+        uses: devcontainers/ci@v0.3
+        with:
+          runCmd: make build-bpf
