@@ -1,0 +1,5 @@
+{
+	"[cpp]": {
+		"editor.inlayHints.enabled": "off"
+	}
+}
