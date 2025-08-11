@@ -58,3 +58,5 @@ dkms.conf
 # bpftool
 bpftool/
 src/vmlinux.h
+src/ping.skel.h
+build/
