@@ -15,7 +15,7 @@ int main(int argc, char** argv)
 
     struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
     if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
-        printf("Failed to set memory lock limit\n");
+        printf("Failed to set memory lock limit: %s\n", strerror(errno));
         return 1;
     }
 

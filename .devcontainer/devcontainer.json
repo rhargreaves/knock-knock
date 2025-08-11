@@ -9,5 +9,11 @@
 				"llvm-vs-code-extensions.vscode-clangd"
 			]
 		}
-	}
+	},
+	"capAdd": [
+		"SYS_RESOURCE",
+		"BPF",
+		"NET_ADMIN",
+		"PERFMON"
+	]
 }
