@@ -14,6 +14,11 @@
 		"SYS_RESOURCE",
 		"BPF",
 		"NET_ADMIN",
-		"PERFMON"
+		"PERFMON",
+		"SYS_ADMIN",
+		"SYS_CHROOT"
+	],
+	"securityOpt": [
+		"apparmor=unconfined"
 	]
 }

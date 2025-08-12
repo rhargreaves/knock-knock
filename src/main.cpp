@@ -38,7 +38,8 @@ int main(int argc, char** argv)
     }
 
     printf("Attached XDP program to %s\n", ifname);
-    pause();
+    printf("Press any key to remove XDP program\n");
+    getchar();
 
     bpf_link__destroy(link);
     ping_bpf__destroy(skel);

@@ -1,8 +1,5 @@
 LIBBPF_A := libbpf/src/libbpf.a
 
-build-bpf: src/ping.bpf.o
-.PHONY: build-bpf
-
 src/vmlinux.h:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > src/vmlinux.h
 
@@ -13,11 +10,10 @@ src/ping.bpf.o: src/ping.bpf.c src/vmlinux.h
 src/ping.skel.h: src/ping.bpf.o
 	bpftool gen skeleton src/ping.bpf.o > src/ping.skel.h
 
-build: src/ping.skel.h
+build: src/ping.skel.h $(LIBBPF_A)
 	mkdir -p build
 	clang++ -g -O2 -Isrc -o build/ping src/main.cpp \
-		$(LIBBPF_A) \
-		-lelf -lz
+		$(LIBBPF_A) -lelf -lz
 .PHONY: build
 
 load-bpf:
@@ -27,3 +23,8 @@ load-bpf:
 run:
 	build/ping eth0
 .PHONY: run
+
+test: build
+	pip3 install -r test/requirements.txt
+	pytest -q
+.PHONY: test

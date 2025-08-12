@@ -60,3 +60,7 @@ bpftool/
 src/vmlinux.h
 src/ping.skel.h
 build/
+
+# python
+.venv/
+__pycache__/
