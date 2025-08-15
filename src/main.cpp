@@ -6,7 +6,12 @@
 
 int main(int argc, char** argv)
 {
-    const char* ifname = argc > 1 ? argv[1] : "eth0";
+    if (argc < 2) {
+        printf("Usage: %s <interface>\n", argv[0]);
+        return 1;
+    }
+
+    const char* ifname = argv[1];
     int ifindex = if_nametoindex(ifname);
     if (!ifindex) {
         printf("Failed to get interface index for %s\n", ifname);

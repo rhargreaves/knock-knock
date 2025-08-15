@@ -47,6 +47,7 @@ def loader(veth_netns):
     bin_path = os.path.abspath(os.path.join(os.getcwd(), "build", "ping"))
     if not os.path.exists(bin_path):
         pytest.skip("build/ping missing")
+    print(f"veth_netns: {veth_netns}")
     proc = subprocess.Popen([bin_path, veth_netns["veth_host"]])
     time.sleep(1)
     yield proc
@@ -61,7 +62,7 @@ def loader(veth_netns):
 
 
 def wait_for_trace(pattern, timeout=5.0):
-    path = "/sys/kernel/tracing/trace_pipe"
+    path = "/sys/kernel/debug/tracing/trace_pipe"
     if not os.path.exists(path):
         return False
     deadline = time.time() + timeout

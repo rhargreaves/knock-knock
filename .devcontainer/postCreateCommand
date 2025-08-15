@@ -12,4 +12,6 @@ echo 'export PATH=/usr/lib/llvm16/bin:$PATH' >> ~/.zshrc
 scripts/install-bpftool
 scripts/install-libbpf
 
+sudo mount -t debugfs none /sys/kernel/debug
+
 python3 -m venv .venv

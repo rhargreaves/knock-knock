@@ -21,10 +21,10 @@ load-bpf:
 .PHONY: load-bpf
 
 run:
-	build/ping eth0
+	sudo build/ping lo
 .PHONY: run
 
 test: build
 	pip3 install -r test/requirements.txt
-	pytest -q
+	sudo pytest -v
 .PHONY: test

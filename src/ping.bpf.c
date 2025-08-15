@@ -3,15 +3,16 @@
 #include <bpf/bpf_helpers.h>
 #include "packet.h"
 
+const int PROTOCOL_ICMP = 1;
+
 SEC("xdp")
 int ping(struct xdp_md* ctx)
 {
     long protocol = lookup_protocol(ctx);
-    if (protocol == 1) // ICMP
-    {
+    if (protocol == IPPROTO_ICMP) {
         bpf_printk("Hello ping");
-        // return XDP_DROP;
     }
+
     return XDP_PASS;
 }
 
