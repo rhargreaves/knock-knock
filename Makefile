@@ -1,3 +1,6 @@
+.SHELL := /bin/bash
+.ONESHELL:
+
 LIBBPF_A := libbpf/src/libbpf.a
 
 src/vmlinux.h:
@@ -25,6 +28,8 @@ run:
 .PHONY: run
 
 test: build
+	source .venv/bin/activate
 	pip3 install -r test/requirements.txt
 	sudo pytest -v
+	deactivate
 .PHONY: test

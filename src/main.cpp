@@ -2,10 +2,24 @@
 #include <net/if.h>
 #include <sys/resource.h>
 #include <unistd.h>
+#include <signal.h>
+#include <cstring>
+#include <cerrno>
+#include <cstdio>
 #include "ping.skel.h"
+
+static volatile bool keep_running = true;
+
+void signal_handler(int sig)
+{
+    keep_running = false;
+}
 
 int main(int argc, char** argv)
 {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
     if (argc < 2) {
         printf("Usage: %s <interface>\n", argv[0]);
         return 1;
@@ -43,8 +57,11 @@ int main(int argc, char** argv)
     }
 
     printf("Attached XDP program to %s\n", ifname);
-    printf("Press any key to remove XDP program\n");
-    getchar();
+    printf("Waiting for packets (Ctrl+C to exit)...\n");
+
+    while (keep_running) {
+        sleep(1);
+    }
 
     bpf_link__destroy(link);
     ping_bpf__destroy(skel);

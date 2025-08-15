@@ -3,8 +3,6 @@
 #include <bpf/bpf_helpers.h>
 #include "packet.h"
 
-const int PROTOCOL_ICMP = 1;
-
 SEC("xdp")
 int ping(struct xdp_md* ctx)
 {
