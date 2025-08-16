@@ -1,11 +1,12 @@
 import os
+import select
+import shutil
+import signal
+import subprocess
 import time
 import uuid
-import select
-import signal
-import shutil
+
 import pytest
-import subprocess
 
 
 def require_cmd(cmd):
@@ -29,14 +30,30 @@ def veth_netns(require_root):
         pytest.skip("ip required")
     try:
         subprocess.run(["ip", "netns", "add", ns], check=True)
-        subprocess.run(["ip", "link", "add", veth_host, "type", "veth", "peer", "name", veth_ns], check=True)
+        subprocess.run(
+            ["ip", "link", "add", veth_host, "type", "veth", "peer", "name", veth_ns],
+            check=True,
+        )
         subprocess.run(["ip", "link", "set", veth_ns, "netns", ns], check=True)
         subprocess.run(["ip", "addr", "add", host_ip, "dev", veth_host], check=True)
         subprocess.run(["ip", "link", "set", veth_host, "up"], check=True)
-        subprocess.run(["ip", "netns", "exec", ns, "ip", "addr", "add", ns_ip, "dev", veth_ns], check=True)
-        subprocess.run(["ip", "netns", "exec", ns, "ip", "link", "set", "lo", "up"], check=True)
-        subprocess.run(["ip", "netns", "exec", ns, "ip", "link", "set", veth_ns, "up"], check=True)
-        yield {"ns": ns, "veth_host": veth_host, "veth_ns": veth_ns, "host_ip": "10.0.0.1", "ns_ip": "10.0.0.2"}
+        subprocess.run(
+            ["ip", "netns", "exec", ns, "ip", "addr", "add", ns_ip, "dev", veth_ns],
+            check=True,
+        )
+        subprocess.run(
+            ["ip", "netns", "exec", ns, "ip", "link", "set", "lo", "up"], check=True
+        )
+        subprocess.run(
+            ["ip", "netns", "exec", ns, "ip", "link", "set", veth_ns, "up"], check=True
+        )
+        yield {
+            "ns": ns,
+            "veth_host": veth_host,
+            "veth_ns": veth_ns,
+            "host_ip": "10.0.0.1",
+            "ns_ip": "10.0.0.2",
+        }
     finally:
         subprocess.run(["ip", "link", "del", veth_host], check=False)
         subprocess.run(["ip", "netns", "del", ns], check=False)
@@ -66,7 +83,7 @@ def wait_for_trace(pattern, timeout=5.0):
     if not os.path.exists(path):
         return False
     deadline = time.time() + timeout
-    with open(path, "r") as f:
+    with open(path) as f:
         fd = f.fileno()
         poller = select.poll()
         poller.register(fd, select.POLLIN)

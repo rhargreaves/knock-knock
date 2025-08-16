@@ -27,7 +27,15 @@ run:
 	sudo build/ping lo
 .PHONY: run
 
-test: build
+lint-tests:
+	source .venv/bin/activate
+	pip3 install -r test/requirements.txt
+	ruff check --fix test/
+	ruff format test/
+	deactivate
+.PHONY: lint-tests
+
+test: build lint-tests
 	source .venv/bin/activate
 	pip3 install -r test/requirements.txt
 	sudo pytest -v

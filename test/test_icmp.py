@@ -1,7 +1,7 @@
 import subprocess
+
 import pytest
 from conftest import wait_for_trace
-
 
 TARGET_PORT = 6666
 
@@ -24,11 +24,13 @@ def port_closed_in_netns(netns, dst_ip, port):
         print(f"Command stderr:\n{result.stderr}")
     return result.returncode == 1
 
+
 @pytest.mark.usefixtures("loader")
 def test_icmp_printk(veth_netns):
     dst = veth_netns["host_ip"]
     ping_in_netns(veth_netns["ns"], dst)
     assert wait_for_trace("Hello ping", timeout=5.0)
+
 
 @pytest.mark.usefixtures("loader")
 def test_port_blocked_by_default(veth_netns):
