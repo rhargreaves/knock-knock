@@ -11,6 +11,14 @@ int ping(struct xdp_md* ctx)
         bpf_printk("Hello ping");
     }
 
+    if (protocol == IPPROTO_TCP) {
+        u16 port = lookup_port(ctx);
+        if (port == 6666) {
+            bpf_printk("Hello tcp port 6666");
+            return XDP_DROP;
+        }
+    }
+
     return XDP_PASS;
 }
 

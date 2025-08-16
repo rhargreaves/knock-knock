@@ -1,3 +1,6 @@
+#pragma once
+#include "vmlinux.h"
+
 #define TC_ACT_UNSPEC (-1)
 #define TC_ACT_OK 0
 #define TC_ACT_RECLASSIFY 1
@@ -39,4 +42,29 @@ unsigned char lookup_protocol(struct xdp_md* ctx)
             protocol = iph->protocol;
     }
     return protocol;
+}
+
+unsigned int lookup_port(struct xdp_md* ctx)
+{
+    unsigned int port = 0;
+
+    void* data = (void*)(long)ctx->data;
+    void* data_end = (void*)(long)ctx->data_end;
+    struct ethhdr* eth = data;
+    if (data + sizeof(struct ethhdr) > data_end)
+        return 0;
+
+    if (bpf_ntohs(eth->h_proto) == ETH_P_IP) {
+        struct iphdr* iph = data + sizeof(struct ethhdr);
+        if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) > data_end)
+            return 0;
+
+        if (iph->protocol == IPPROTO_TCP) {
+            struct tcphdr* tcph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
+            if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr)
+                <= data_end)
+                port = bpf_ntohs(tcph->dest);
+        }
+    }
+    return port;
 }

@@ -4,7 +4,7 @@ set -ex
 sudo apk add --no-cache \
 	build-base clang clang-dev libelf \
 	zlib linux-tools elfutils-dev linux-headers \
-	libc-dev llvm16 python3 py3-pip iproute2
+	libc-dev llvm16 python3 py3-pip iproute2 netcat-openbsd
 
 export PATH=/usr/lib/llvm16/bin:$PATH
 echo 'export PATH=/usr/lib/llvm16/bin:$PATH' >> ~/.zshrc

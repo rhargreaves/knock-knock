@@ -38,6 +38,6 @@ lint-tests:
 test: build lint-tests
 	source .venv/bin/activate
 	pip3 install -r test/requirements.txt
-	sudo pytest -v
+	sudo pytest
 	deactivate
 .PHONY: test
