@@ -6,14 +6,13 @@
 #include <cstring>
 #include <cerrno>
 #include <cstdio>
-#include <atomic>
 #include "ping.skel.h"
 
-static std::atomic<bool> keep_running { true };
+static volatile sig_atomic_t keep_running = 1;
 
 void signal_handler(int sig) noexcept
 {
-    keep_running.store(false);
+    keep_running = 0;
 }
 
 int main(int argc, char** argv)
