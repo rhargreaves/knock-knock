@@ -6,7 +6,8 @@
 		"vscode": {
 			"extensions": [
 				"anysphere.cpptools",
-				"llvm-vs-code-extensions.vscode-clangd"
+				"llvm-vs-code-extensions.vscode-clangd",
+				"charliermarsh.ruff"
 			]
 		}
 	},
