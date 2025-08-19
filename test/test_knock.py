@@ -8,13 +8,7 @@ TARGET_PORT = 6666
 
 
 def port_filtered(dst_ip, port):
-    cmd = [
-        "nc",
-        "-zvw",
-        "2",
-        dst_ip,
-        str(port),
-    ]
+    cmd = ["nc", "-zvw", "2", dst_ip, str(port)]
     print(f"Running command: {' '.join(cmd)}")
     result = subprocess.run(cmd, capture_output=True, text=True)
     print(f"Command output:\n{result.stdout}")
@@ -49,7 +43,9 @@ def test_port_filtered_by_default():
 @pytest.mark.usefixtures("loader")
 def test_port_closed_when_udp_packet_sent():
     dst = "127.0.0.1"
+
     CODE_1 = 7777
+
     print(f"Sending UDP packet to localhost:{CODE_1}")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -58,4 +54,4 @@ def test_port_closed_when_udp_packet_sent():
     finally:
         sock.close()
 
-    assert wait_for_trace("Hello udp port 7777", timeout=5.0)
+    assert wait_for_trace(f"Hello udp port {CODE_1}", timeout=5.0)
