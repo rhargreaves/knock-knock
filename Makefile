@@ -2,6 +2,7 @@
 .ONESHELL:
 
 LIBBPF_A := libbpf/src/libbpf.a
+PYTEST_ARGS := --capture=no
 
 src/vmlinux.h:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > src/vmlinux.h
@@ -38,6 +39,10 @@ lint-tests:
 test: build lint-tests
 	source .venv/bin/activate
 	pip3 install -r test/requirements.txt
-	sudo pytest
+	sudo pytest $(PYTEST_ARGS)
 	deactivate
 .PHONY: test
+
+print-trace:
+	sudo cat /sys/kernel/debug/tracing/trace_pipe
+.PHONY: print-trace

@@ -59,11 +59,23 @@ unsigned int lookup_port(struct xdp_md* ctx)
         if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) > data_end)
             return 0;
 
-        if (iph->protocol == IPPROTO_TCP) {
-            struct tcphdr* tcph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
-            if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr)
-                <= data_end)
-                port = bpf_ntohs(tcph->dest);
+        switch (iph->protocol) {
+            case IPPROTO_TCP: {
+                struct tcphdr* tcph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
+                if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr)
+                    <= data_end)
+                    port = bpf_ntohs(tcph->dest);
+                break;
+            }
+            case IPPROTO_UDP: {
+                struct udphdr* udph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
+                if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr)
+                    <= data_end)
+                    port = bpf_ntohs(udph->dest);
+                break;
+            }
+            default:
+                break;
         }
     }
     return port;
