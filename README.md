@@ -12,3 +12,9 @@ Use the Dev Container as the main development environment.
 ```sh
 make build-bpf
 ```
+
+### Test
+
+```sh
+make test
+```
