@@ -16,7 +16,7 @@ struct port_sequence {
 struct ip_state {
     u8 sequence_step;
     u64 last_packet_time;
-    u8 sequence_complete;
+    bool sequence_complete;
 };
 
 struct {
@@ -30,7 +30,7 @@ SEC("xdp")
 int ping(struct xdp_md* ctx)
 {
     struct port_sequence seq = {
-        .ports = { 1234 },
+        .ports = { 1111 },
         .length = 1,
         .timeout_ms = 1000,
     };
@@ -48,10 +48,21 @@ int ping(struct xdp_md* ctx)
 
     if (protocol == IPPROTO_UDP) {
         u16 port = lookup_port(ctx);
-        if (port == 7777) {
+        if (port == 1111) {
             u32 source_ip = lookup_source_ip(ctx);
             bpf_printk("Hello source ip %d", source_ip);
             bpf_printk("Hello udp port %d", port);
+
+            struct ip_state* state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
+            if (!state) {
+                struct ip_state new_state = {
+                    .sequence_step = 1,
+                    .last_packet_time = bpf_ktime_get_ns(),
+                    .sequence_complete = true,
+                };
+                bpf_map_update_elem(&ip_tracking_map, &source_ip, &new_state, BPF_ANY);
+                state = &new_state;
+            }
 
             return XDP_PASS;
         }
@@ -61,7 +72,18 @@ int ping(struct xdp_md* ctx)
         u16 port = lookup_port(ctx);
         if (port == 6666) {
             bpf_printk("Hello tcp port 6666");
-            return XDP_DROP;
+
+            u32 source_ip = lookup_source_ip(ctx);
+            struct ip_state* state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
+            if (!state) {
+                bpf_printk("Dropping packet because state is not found");
+                return XDP_DROP;
+            }
+
+            if (state->sequence_complete) {
+                bpf_printk("Allowing packet because sequence is complete");
+                return XDP_PASS;
+            }
         }
     }
 

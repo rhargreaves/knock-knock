@@ -40,19 +40,60 @@ def test_port_filtered_by_default():
     assert wait_for_trace("Hello tcp port 6666", timeout=5.0)
 
 
-@pytest.mark.usefixtures("loader")
-def test_port_closed_when_udp_packet_sent():
-    dst = "127.0.0.1"
-
-    CODE_1 = 7777
-
-    print(f"Sending UDP packet to localhost:{CODE_1}")
+def send_udp_packet(dst, port):
+    print(f"Sending UDP packet to {dst}:{port}")
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
-        sock.sendto(b"", (dst, CODE_1))
-        print(f"Sent UDP packet to {dst}:{CODE_1}")
+        sock.sendto(b"", (dst, port))
+        print(f"Sent UDP packet to {dst}:{port}")
     finally:
         sock.close()
 
-    assert wait_for_trace(f"Hello udp port {CODE_1}", timeout=5.0)
-    assert wait_for_trace("Hello source ip", timeout=5.0)
+
+def port_closed_native(dst, port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1.0)
+    try:
+        sock.connect((dst, port))
+        return False
+    except ConnectionRefusedError:
+        return True
+    finally:
+        sock.close()
+
+
+def port_filtered_native(dst, port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1.0)
+    try:
+        sock.connect((dst, port))
+        return False
+    except TimeoutError:
+        return True
+    except ConnectionRefusedError:
+        return False
+    finally:
+        sock.close()
+
+
+@pytest.mark.usefixtures("loader")
+def test_port_closed_when_correct_code_udp_packet_sent():
+    dst = "127.0.0.1"
+
+    CODE_1 = 1111
+
+    send_udp_packet(dst, CODE_1)
+
+    # should be closed rather than filtered now
+    assert port_closed_native(dst, TARGET_PORT)
+
+
+@pytest.mark.usefixtures("loader")
+def test_port_filteed_when_wrong_code_udp_packet_sent():
+    dst = "127.0.0.1"
+
+    WRONG_CODE_1 = 1221
+
+    send_udp_packet(dst, WRONG_CODE_1)
+
+    assert port_filtered_native(dst, TARGET_PORT)
