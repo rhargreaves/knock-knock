@@ -1,5 +1,6 @@
 {
 	"[cpp]": {
 		"editor.inlayHints.enabled": "off"
-	}
+	},
+	"python.defaultInterpreterPath": "./.venv/bin/python"
 }
