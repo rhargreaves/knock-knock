@@ -55,3 +55,4 @@ def test_port_closed_when_udp_packet_sent():
         sock.close()
 
     assert wait_for_trace(f"Hello udp port {CODE_1}", timeout=5.0)
+    assert wait_for_trace("Hello source ip", timeout=5.0)

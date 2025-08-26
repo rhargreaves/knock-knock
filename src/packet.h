@@ -80,3 +80,50 @@ unsigned int lookup_port(struct xdp_md* ctx)
     }
     return port;
 }
+
+unsigned int lookup_source_ip(struct xdp_md* ctx)
+{
+    unsigned int source_ip = 0;
+
+    void* data = (void*)(long)ctx->data;
+    void* data_end = (void*)(long)ctx->data_end;
+    struct ethhdr* eth = data;
+    if (data + sizeof(struct ethhdr) > data_end)
+        return 0;
+
+    if (bpf_ntohs(eth->h_proto) == ETH_P_IP) {
+        struct iphdr* iph = data + sizeof(struct ethhdr);
+        if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) > data_end)
+            return 0;
+
+        source_ip = bpf_ntohl(iph->saddr);
+    }
+
+    return source_ip;
+}
+
+unsigned int lookup_icmp_type(struct xdp_md* ctx)
+{
+    unsigned int icmp_type = 0;
+
+    void* data = (void*)(long)ctx->data;
+    void* data_end = (void*)(long)ctx->data_end;
+    struct ethhdr* eth = data;
+    if (data + sizeof(struct ethhdr) > data_end)
+        return 0;
+
+    if (bpf_ntohs(eth->h_proto) == ETH_P_IP) {
+        struct iphdr* iph = data + sizeof(struct ethhdr);
+        if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) > data_end)
+            return 0;
+
+        if (iph->protocol == IPPROTO_ICMP) {
+            struct icmphdr* icmph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
+            if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct icmphdr)
+                <= data_end)
+                icmp_type = icmph->type;
+        }
+    }
+
+    return icmp_type;
+}

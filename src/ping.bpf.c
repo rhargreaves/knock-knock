@@ -5,6 +5,8 @@
 
 #define MAX_SEQUENCE_LENGTH 10
 
+#define ICMP_ECHO 8
+
 struct port_sequence {
     u16 ports[MAX_SEQUENCE_LENGTH];
     u8 length;
@@ -28,22 +30,29 @@ SEC("xdp")
 int ping(struct xdp_md* ctx)
 {
     struct port_sequence seq = {
-        .ports = {1234},
+        .ports = { 1234 },
         .length = 1,
         .timeout_ms = 1000,
     };
 
     long protocol = lookup_protocol(ctx);
     if (protocol == IPPROTO_ICMP) {
-        bpf_printk("Hello ping");
+        u8 icmp_type = lookup_icmp_type(ctx);
+        bpf_printk("Hello icmp type %d", icmp_type);
+        if (icmp_type == ICMP_ECHO) {
+            bpf_printk("Hello ping");
+        }
+
         return XDP_PASS;
     }
 
     if (protocol == IPPROTO_UDP) {
         u16 port = lookup_port(ctx);
-        bpf_printk("Hello udp port %d", port);
         if (port == 7777) {
-            bpf_printk("Hello udp port 7777");
+            u32 source_ip = lookup_source_ip(ctx);
+            bpf_printk("Hello source ip %d", source_ip);
+            bpf_printk("Hello udp port %d", port);
+
             return XDP_PASS;
         }
     }
