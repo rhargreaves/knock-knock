@@ -1,5 +1,7 @@
 #pragma once
 #include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
 #define TC_ACT_UNSPEC (-1)
 #define TC_ACT_OK 0
@@ -19,111 +21,74 @@
 #define ICMP_TYPE_OFF (ETH_HLEN + sizeof(struct iphdr) + offsetof(struct icmphdr, type))
 #define ICMP_CSUM_SIZE sizeof(__u16)
 
-// Returns the protocol byte for an IP packet, 0 for anything else
-// static __always_inline unsigned char lookup_protocol(struct xdp_md *ctx)
-unsigned char lookup_protocol(struct xdp_md* ctx)
+static __always_inline struct iphdr* get_ip_header(struct xdp_md* ctx)
 {
-    unsigned char protocol = 0;
-
     void* data = (void*)(long)ctx->data;
     void* data_end = (void*)(long)ctx->data_end;
-    struct ethhdr* eth = data;
-    if (data + sizeof(struct ethhdr) > data_end)
-        return 0;
+    struct ethhdr* eth = (struct ethhdr*)data;
 
-    // Check that it's an IP packet
-    if (bpf_ntohs(eth->h_proto) == ETH_P_IP) {
-        // Return the protocol of this packet
-        // 1 = ICMP
-        // 6 = TCP
-        // 17 = UDP
-        struct iphdr* iph = data + sizeof(struct ethhdr);
-        if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) <= data_end)
-            protocol = iph->protocol;
-    }
-    return protocol;
+    if ((char*)data + sizeof(struct ethhdr) > (char*)data_end)
+        return (struct iphdr*)0;
+
+    if (bpf_ntohs(eth->h_proto) != ETH_P_IP)
+        return (struct iphdr*)0;
+
+    struct iphdr* iph = (struct iphdr*)((char*)data + sizeof(struct ethhdr));
+    if ((char*)data + sizeof(struct ethhdr) + sizeof(struct iphdr) > (char*)data_end)
+        return (struct iphdr*)0;
+
+    return iph;
+}
+
+unsigned char lookup_protocol(struct xdp_md* ctx)
+{
+    struct iphdr* iph = get_ip_header(ctx);
+    return iph ? iph->protocol : 0;
 }
 
 unsigned int lookup_port(struct xdp_md* ctx)
 {
-    unsigned int port = 0;
-
-    void* data = (void*)(long)ctx->data;
-    void* data_end = (void*)(long)ctx->data_end;
-    struct ethhdr* eth = data;
-    if (data + sizeof(struct ethhdr) > data_end)
+    struct iphdr* iph = get_ip_header(ctx);
+    if (!iph)
         return 0;
 
-    if (bpf_ntohs(eth->h_proto) == ETH_P_IP) {
-        struct iphdr* iph = data + sizeof(struct ethhdr);
-        if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) > data_end)
-            return 0;
+    void* data_end = (void*)(long)ctx->data_end;
+    void* transport_header = (char*)iph + sizeof(struct iphdr);
 
-        switch (iph->protocol) {
-            case IPPROTO_TCP: {
-                struct tcphdr* tcph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
-                if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct tcphdr)
-                    <= data_end)
-                    port = bpf_ntohs(tcph->dest);
-                break;
-            }
-            case IPPROTO_UDP: {
-                struct udphdr* udph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
-                if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct udphdr)
-                    <= data_end)
-                    port = bpf_ntohs(udph->dest);
-                break;
-            }
-            default:
-                break;
-        }
+    switch (iph->protocol) {
+    case IPPROTO_TCP: {
+        struct tcphdr* tcph = (struct tcphdr*)transport_header;
+        if ((char*)transport_header + sizeof(struct tcphdr) <= (char*)data_end)
+            return bpf_ntohs(tcph->dest);
+        break;
     }
-    return port;
+    case IPPROTO_UDP: {
+        struct udphdr* udph = (struct udphdr*)transport_header;
+        if ((char*)transport_header + sizeof(struct udphdr) <= (char*)data_end)
+            return bpf_ntohs(udph->dest);
+        break;
+    }
+    }
+    return 0;
 }
 
 unsigned int lookup_source_ip(struct xdp_md* ctx)
 {
-    unsigned int source_ip = 0;
-
-    void* data = (void*)(long)ctx->data;
-    void* data_end = (void*)(long)ctx->data_end;
-    struct ethhdr* eth = data;
-    if (data + sizeof(struct ethhdr) > data_end)
-        return 0;
-
-    if (bpf_ntohs(eth->h_proto) == ETH_P_IP) {
-        struct iphdr* iph = data + sizeof(struct ethhdr);
-        if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) > data_end)
-            return 0;
-
-        source_ip = bpf_ntohl(iph->saddr);
-    }
-
-    return source_ip;
+    struct iphdr* iph = get_ip_header(ctx);
+    return iph ? bpf_ntohl(iph->saddr) : 0;
 }
 
 unsigned int lookup_icmp_type(struct xdp_md* ctx)
 {
-    unsigned int icmp_type = 0;
-
-    void* data = (void*)(long)ctx->data;
-    void* data_end = (void*)(long)ctx->data_end;
-    struct ethhdr* eth = data;
-    if (data + sizeof(struct ethhdr) > data_end)
+    struct iphdr* iph = get_ip_header(ctx);
+    if (!iph || iph->protocol != IPPROTO_ICMP)
         return 0;
 
-    if (bpf_ntohs(eth->h_proto) == ETH_P_IP) {
-        struct iphdr* iph = data + sizeof(struct ethhdr);
-        if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) > data_end)
-            return 0;
+    void* data_end = (void*)(long)ctx->data_end;
+    struct icmphdr* icmph = (struct icmphdr*)((char*)iph + sizeof(struct iphdr));
 
-        if (iph->protocol == IPPROTO_ICMP) {
-            struct icmphdr* icmph = data + sizeof(struct ethhdr) + sizeof(struct iphdr);
-            if (data + sizeof(struct ethhdr) + sizeof(struct iphdr) + sizeof(struct icmphdr)
-                <= data_end)
-                icmp_type = icmph->type;
-        }
-    }
+    if ((char*)icmph + sizeof(struct icmphdr) <= (char*)data_end)
+        return icmph->type;
 
-    return icmp_type;
+    return 0;
 }
