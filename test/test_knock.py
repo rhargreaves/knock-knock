@@ -50,6 +50,17 @@ def send_udp_packet(dst, port):
         sock.close()
 
 
+def send_udp_packet_from_ip(dst, port, src_ip):
+    print(f"Sending UDP packet from {src_ip} to {dst}:{port}")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.bind((src_ip, 0))
+        sock.sendto(b"", (dst, port))
+        print(f"Sent UDP packet from {src_ip} to {dst}:{port}")
+    finally:
+        sock.close()
+
+
 def port_closed_native(dst, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(1.0)
@@ -86,6 +97,17 @@ def test_port_closed_when_correct_code_udp_packet_sent():
 
     # should be closed rather than filtered now
     assert port_closed_native(dst, TARGET_PORT)
+
+
+@pytest.mark.usefixtures("loader")
+def test_port_filtered_when_correct_code_udp_packet_sent_from_wrong_ip():
+    dst = "127.0.0.1"
+
+    CODE_1 = 1111
+
+    send_udp_packet_from_ip(dst, CODE_1, "127.0.0.5")
+
+    assert port_filtered_native(dst, TARGET_PORT)
 
 
 @pytest.mark.usefixtures("loader")
