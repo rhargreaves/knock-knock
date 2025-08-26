@@ -4,6 +4,9 @@
 SEC("xdp")
 int knock(struct xdp_md* ctx)
 {
+    const u16 target_port = 6666;
+    const u16 code_1 = 1111;
+
     struct port_sequence seq = {
         .ports = { 1111 },
         .length = 1,
@@ -13,7 +16,7 @@ int knock(struct xdp_md* ctx)
     long protocol = lookup_protocol(ctx);
     if (protocol == IPPROTO_UDP) {
         u16 port = lookup_port(ctx);
-        if (port == 1111) {
+        if (port == code_1) {
             u32 source_ip = lookup_source_ip(ctx);
             bpf_printk("Hello source ip %d", source_ip);
             bpf_printk("Hello udp port %d", port);
@@ -35,8 +38,8 @@ int knock(struct xdp_md* ctx)
 
     if (protocol == IPPROTO_TCP) {
         u16 port = lookup_port(ctx);
-        if (port == 6666) {
-            bpf_printk("Hello tcp port 6666");
+        if (port == target_port) {
+            bpf_printk("Hello tcp port %d", port);
 
             u32 source_ip = lookup_source_ip(ctx);
             struct ip_state* state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
