@@ -6,7 +6,7 @@
 #include <cstring>
 #include <cerrno>
 #include <cstdio>
-#include "ping.skel.h"
+#include "knock.skel.h"
 
 static volatile sig_atomic_t keep_running = 1;
 
@@ -38,21 +38,21 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    ping_bpf* skel = ping_bpf__open();
+    knock_bpf* skel = knock_bpf__open();
     if (!skel) {
         printf("Failed to open BPF skeleton\n");
         return 1;
     }
-    if (ping_bpf__load(skel) != 0) {
+    if (knock_bpf__load(skel) != 0) {
         printf("Failed to load BPF program\n");
-        ping_bpf__destroy(skel);
+        knock_bpf__destroy(skel);
         return 1;
     }
 
-    bpf_link* link = bpf_program__attach_xdp(skel->progs.ping, ifindex);
+    bpf_link* link = bpf_program__attach_xdp(skel->progs.knock, ifindex);
     if (!link) {
         printf("Failed to attach XDP program\n");
-        ping_bpf__destroy(skel);
+        knock_bpf__destroy(skel);
         return 1;
     }
 
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
     }
 
     bpf_link__destroy(link);
-    ping_bpf__destroy(skel);
+    knock_bpf__destroy(skel);
     printf("Detached XDP program from %s\n", ifname);
 
     return 0;

@@ -9,7 +9,6 @@
 #define TC_ACT_SHOT 2
 
 #define ETH_P_IP 0x0800
-#define ICMP_PING 8
 
 #define ETH_ALEN 6
 #define ETH_HLEN 14
@@ -76,19 +75,4 @@ static __always_inline unsigned int lookup_source_ip(struct xdp_md* ctx)
 {
     struct iphdr* iph = get_ip_header(ctx);
     return iph ? bpf_ntohl(iph->saddr) : 0;
-}
-
-static __always_inline unsigned int lookup_icmp_type(struct xdp_md* ctx)
-{
-    struct iphdr* iph = get_ip_header(ctx);
-    if (!iph || iph->protocol != IPPROTO_ICMP)
-        return 0;
-
-    void* data_end = (void*)(long)ctx->data_end;
-    struct icmphdr* icmph = (struct icmphdr*)((char*)iph + sizeof(struct iphdr));
-
-    if ((char*)icmph + sizeof(struct icmphdr) <= (char*)data_end)
-        return icmph->type;
-
-    return 0;
 }

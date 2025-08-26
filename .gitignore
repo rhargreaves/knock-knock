@@ -58,7 +58,7 @@ dkms.conf
 # bpftool
 bpftool/
 src/vmlinux.h
-src/ping.skel.h
+src/knock.skel.h
 build/
 
 # python

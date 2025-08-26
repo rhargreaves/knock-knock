@@ -11,25 +11,25 @@ PIP_ARGS := --disable-pip-version-check -q
 src/vmlinux.h:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > src/vmlinux.h
 
-src/ping.bpf.o: src/ping.bpf.c src/vmlinux.h
-	clang -g -O2 -target bpf -c src/ping.bpf.c -o src/ping.bpf.o
-.PHONY: src/ping.bpf.o
+src/knock.bpf.o: src/knock.bpf.c src/vmlinux.h
+	clang -g -O2 -target bpf -c src/knock.bpf.c -o src/knock.bpf.o
+.PHONY: src/knock.bpf.o
 
-src/ping.skel.h: src/ping.bpf.o
-	bpftool gen skeleton src/ping.bpf.o > src/ping.skel.h
+src/knock.skel.h: src/knock.bpf.o
+	bpftool gen skeleton src/knock.bpf.o > src/knock.skel.h
 
-build: src/ping.skel.h $(LIBBPF_A)
+build: src/knock.skel.h $(LIBBPF_A)
 	mkdir -p build
-	clang++ -g -O2 -Isrc -o build/ping src/main.cpp \
+	clang++ -g -O2 -Isrc -o build/knock src/main.cpp \
 		$(LIBBPF_A) -lelf -lz
 .PHONY: build
 
 load-bpf:
-	sudo bpftool prog load src/ping.bpf.o /sys/fs/bpf/ping
+	sudo bpftool prog load src/knock.bpf.o /sys/fs/bpf/knock
 .PHONY: load-bpf
 
 run:
-	sudo build/ping lo
+	sudo build/knock lo
 .PHONY: run
 
 lint-tests:
@@ -53,10 +53,10 @@ print-trace:
 
 clean:
 	rm -rf build
-	-sudo pkill -f "build/ping" 2>/dev/null
+	-sudo pkill -f "build/knock" 2>/dev/null
 	-sudo ip link show | grep -o '^[0-9]*: [^:]*' | while read line; do \
 		iface=$$(echo $$line | cut -d' ' -f2); \
 		sudo ip link set dev $$iface xdp off 2>/dev/null; \
 	done
-	-sudo rm -f /sys/fs/bpf/ping 2>/dev/null
+	-sudo rm -f /sys/fs/bpf/knock 2>/dev/null
 .PHONY: clean

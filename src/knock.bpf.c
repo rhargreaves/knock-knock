@@ -27,7 +27,7 @@ struct {
 } ip_tracking_map SEC(".maps");
 
 SEC("xdp")
-int ping(struct xdp_md* ctx)
+int knock(struct xdp_md* ctx)
 {
     struct port_sequence seq = {
         .ports = { 1111 },
