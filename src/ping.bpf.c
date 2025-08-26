@@ -36,16 +36,6 @@ int ping(struct xdp_md* ctx)
     };
 
     long protocol = lookup_protocol(ctx);
-    if (protocol == IPPROTO_ICMP) {
-        u8 icmp_type = lookup_icmp_type(ctx);
-        bpf_printk("Hello icmp type %d", icmp_type);
-        if (icmp_type == ICMP_ECHO) {
-            bpf_printk("Hello ping");
-        }
-
-        return XDP_PASS;
-    }
-
     if (protocol == IPPROTO_UDP) {
         u16 port = lookup_port(ctx);
         if (port == 1111) {
