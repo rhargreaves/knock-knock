@@ -40,13 +40,13 @@ static __always_inline struct iphdr* get_ip_header(struct xdp_md* ctx)
     return iph;
 }
 
-unsigned char lookup_protocol(struct xdp_md* ctx)
+static __always_inline unsigned char lookup_protocol(struct xdp_md* ctx)
 {
     struct iphdr* iph = get_ip_header(ctx);
     return iph ? iph->protocol : 0;
 }
 
-unsigned int lookup_port(struct xdp_md* ctx)
+static __always_inline unsigned int lookup_port(struct xdp_md* ctx)
 {
     struct iphdr* iph = get_ip_header(ctx);
     if (!iph)
@@ -72,13 +72,13 @@ unsigned int lookup_port(struct xdp_md* ctx)
     return 0;
 }
 
-unsigned int lookup_source_ip(struct xdp_md* ctx)
+static __always_inline unsigned int lookup_source_ip(struct xdp_md* ctx)
 {
     struct iphdr* iph = get_ip_header(ctx);
     return iph ? bpf_ntohl(iph->saddr) : 0;
 }
 
-unsigned int lookup_icmp_type(struct xdp_md* ctx)
+static __always_inline unsigned int lookup_icmp_type(struct xdp_md* ctx)
 {
     struct iphdr* iph = get_ip_header(ctx);
     if (!iph || iph->protocol != IPPROTO_ICMP)
