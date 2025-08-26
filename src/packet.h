@@ -3,22 +3,7 @@
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
 
-#define TC_ACT_UNSPEC (-1)
-#define TC_ACT_OK 0
-#define TC_ACT_RECLASSIFY 1
-#define TC_ACT_SHOT 2
-
 #define ETH_P_IP 0x0800
-
-#define ETH_ALEN 6
-#define ETH_HLEN 14
-
-#define IP_SRC_OFF (ETH_HLEN + offsetof(struct iphdr, saddr))
-#define IP_DST_OFF (ETH_HLEN + offsetof(struct iphdr, daddr))
-
-#define ICMP_CSUM_OFF (ETH_HLEN + sizeof(struct iphdr) + offsetof(struct icmphdr, checksum))
-#define ICMP_TYPE_OFF (ETH_HLEN + sizeof(struct iphdr) + offsetof(struct icmphdr, type))
-#define ICMP_CSUM_SIZE sizeof(__u16)
 
 static __always_inline struct iphdr* get_ip_header(struct xdp_md* ctx)
 {
