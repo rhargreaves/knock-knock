@@ -16,6 +16,9 @@ ignore = [
     "E501",  # line too long, handled by black
 ]
 
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"

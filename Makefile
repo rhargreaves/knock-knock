@@ -2,7 +2,11 @@
 .ONESHELL:
 
 LIBBPF_A := libbpf/src/libbpf.a
-PYTEST_ARGS := --capture=no
+
+# PYTEST_ARGS := --capture=no
+PYTEST_ARGS :=
+PIP_ARGS := --disable-pip-version-check -q
+
 
 src/vmlinux.h:
 	bpftool btf dump file /sys/kernel/btf/vmlinux format c > src/vmlinux.h
@@ -30,7 +34,7 @@ run:
 
 lint-tests:
 	source .venv/bin/activate
-	pip3 install -r test/requirements.txt
+	pip3 install $(PIP_ARGS) -r test/requirements.txt
 	ruff check --fix test/
 	ruff format test/
 	deactivate
@@ -38,7 +42,7 @@ lint-tests:
 
 test: build lint-tests
 	source .venv/bin/activate
-	pip3 install -r test/requirements.txt
+	pip3 install $(PIP_ARGS) -r test/requirements.txt
 	sudo pytest $(PYTEST_ARGS)
 	deactivate
 .PHONY: test
