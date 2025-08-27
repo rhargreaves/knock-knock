@@ -1,6 +1,11 @@
 import pytest
 from conftest import wait_for_trace
-from net import port_closed, port_filtered, send_udp_packet, send_udp_packet_from_ip
+from utils.net import (
+    port_closed,
+    port_filtered,
+    send_udp_packet,
+    send_udp_packet_from_ip,
+)
 
 TARGET_PORT = 6666
 

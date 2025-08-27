@@ -3,6 +3,8 @@ import os
 import select
 import time
 
+TRACE_PIPE_PATH = "/sys/kernel/debug/tracing/trace_pipe"
+
 
 class TraceBuffer:
     def __init__(self):
@@ -12,12 +14,11 @@ class TraceBuffer:
 
     def start_reading(self):
         """Initialize trace reading"""
-        path = "/sys/kernel/debug/tracing/trace_pipe"
-        if not os.path.exists(path):
+        if not os.path.exists(TRACE_PIPE_PATH):
             print("Warning: trace_pipe not found")
             return
         try:
-            self.trace_file = open(path)
+            self.trace_file = open(TRACE_PIPE_PATH)
 
             # Make the file descriptor non-blocking
             fd = self.trace_file.fileno()
@@ -48,7 +49,14 @@ class TraceBuffer:
             print(f"  {line}")
 
     def clear(self):
-        """Clear the trace buffer"""
+        """Clear kernel trace pipe and our buffer"""
+        if os.path.exists(TRACE_PIPE_PATH):
+            try:
+                with open(TRACE_PIPE_PATH, "w") as f:
+                    f.write("")
+                print("Kernel trace cleared")
+            except Exception:
+                pass
         self.lines.clear()
         print("Trace buffer cleared")
 

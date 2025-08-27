@@ -5,7 +5,7 @@ import subprocess
 import time
 
 import pytest
-from trace_buffer import TraceBuffer
+from utils.trace_buffer import TraceBuffer
 
 
 def require_cmd(cmd):
@@ -24,9 +24,8 @@ def loader():
     if not os.path.exists(bin_path):
         pytest.fail(f"bin_path missing: {bin_path}")
 
-    # Initialize trace buffer
     trace_buffer.start_reading()
-    clear_trace()
+    trace_buffer.clear()
 
     proc = subprocess.Popen([bin_path, "lo", "6666", "1111", "2222", "3333"])
     time.sleep(0.5)
@@ -41,26 +40,11 @@ def loader():
     except Exception:
         proc.kill()
 
-    # Cleanup trace buffer
     trace_buffer.stop_reading()
-    clear_trace()
-
-
-# Global trace buffer instance
-trace_buffer = TraceBuffer()
-
-
-def clear_trace():
-    """Clear kernel trace pipe and our buffer"""
-    path = "/sys/kernel/debug/tracing/trace_pipe"
-    if os.path.exists(path):
-        try:
-            with open(path, "w") as f:
-                f.write("")
-            print("Kernel trace cleared")
-        except Exception:
-            pass
     trace_buffer.clear()
+
+
+trace_buffer = TraceBuffer()
 
 
 def wait_for_trace(pattern):
