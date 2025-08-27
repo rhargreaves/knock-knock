@@ -10,7 +10,7 @@ TARGET_PORT = 6666
 def test_port_filtered_by_default():
     dst = "127.0.0.1"
     assert port_filtered(dst, TARGET_PORT)
-    assert wait_for_trace("Hello tcp port 6666", timeout=5.0)
+    assert wait_for_trace("debug: tcp port: 6666", timeout=5.0)
 
 
 def send_udp_packet(dst, port):
@@ -69,12 +69,12 @@ def test_port_closed_when_correct_code_udp_packets_sent():
     CODE_3 = 3333
 
     send_udp_packet(dst, CODE_1)
-    assert wait_for_trace("Code 1 passed.", timeout=5.0)
+    assert wait_for_trace("info: code 1 passed", timeout=5.0)
     send_udp_packet(dst, CODE_2)
-    assert wait_for_trace("Code 2 passed.", timeout=5.0)
+    assert wait_for_trace("info: code 2 passed", timeout=5.0)
     send_udp_packet(dst, CODE_3)
-    assert wait_for_trace("Code 3 passed.", timeout=5.0)
-    assert wait_for_trace("Sequence complete.", timeout=5.0)
+    assert wait_for_trace("info: code 3 passed", timeout=5.0)
+    assert wait_for_trace("info: sequence complete", timeout=5.0)
 
     # should be closed rather than filtered now
     assert port_closed(dst, TARGET_PORT)
@@ -90,11 +90,11 @@ def test_port_filtered_when_wrong_code_sent_in_middle_of_correct_codes():
     CODE_3 = 3333
 
     send_udp_packet(dst, CODE_1)
-    assert wait_for_trace("Code 1 passed.", timeout=5.0)
+    assert wait_for_trace("info: code 1 passed", timeout=5.0)
     send_udp_packet(dst, CODE_2)
-    assert wait_for_trace("Code 2 passed.", timeout=5.0)
+    assert wait_for_trace("info: code 2 passed", timeout=5.0)
     send_udp_packet(dst, CODE_WRONG)
-    assert wait_for_trace("Sequence reset.", timeout=5.0)
+    assert wait_for_trace("info: sequence reset", timeout=5.0)
     send_udp_packet(dst, CODE_3)
 
     assert port_filtered(dst, TARGET_PORT)

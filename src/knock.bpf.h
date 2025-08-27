@@ -24,3 +24,7 @@ struct {
     __type(key, __u32);
     __type(value, __u16);
 } target_port_map SEC(".maps");
+
+#define log_info(fmt, ...) bpf_printk("info: " fmt, ##__VA_ARGS__)
+#define log_error(fmt, ...) bpf_printk("error: " fmt, ##__VA_ARGS__)
+#define log_debug(fmt, ...) bpf_printk("debug: " fmt, ##__VA_ARGS__)
