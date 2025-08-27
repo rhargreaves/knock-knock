@@ -29,7 +29,7 @@ def loader():
     trace_buffer.start_reading()
     clear_trace()
 
-    proc = subprocess.Popen([bin_path, "lo"])
+    proc = subprocess.Popen([bin_path, "lo", "6666", "1111", "2222", "3333"])
     time.sleep(1)
     yield proc
     trace_buffer.print_trace()

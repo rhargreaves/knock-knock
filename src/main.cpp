@@ -8,6 +8,20 @@
 #include <cstdio>
 #include "knock.skel.h"
 
+#define MAX_SEQUENCE_LENGTH 10
+
+struct port_sequence {
+    __u16 ports[MAX_SEQUENCE_LENGTH];
+    __u8 length;
+    __u64 timeout_ms;
+};
+
+struct ip_state {
+    __u8 sequence_step;
+    __u64 last_packet_time;
+    bool sequence_complete;
+};
+
 static volatile sig_atomic_t keep_running = 1;
 
 void signal_handler(int sig) noexcept
@@ -32,6 +46,30 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    __u16 target_port;
+    if (argc > 2) {
+        target_port = atoi(argv[2]);
+    } else {
+        printf("Target port is not specified\n");
+        return 1;
+    }
+
+    struct port_sequence seq;
+    if (argc > 3) {
+        seq.length = 0;
+        for (int i = 3; i < argc && seq.length < MAX_SEQUENCE_LENGTH; i++) {
+            seq.ports[seq.length] = atoi(argv[i]);
+            seq.length++;
+        }
+    }
+
+    printf("Target port: %d\n", target_port);
+    printf("Knock sequence: ");
+    for (int i = 0; i < seq.length; i++) {
+        printf("%d ", seq.ports[i]);
+    }
+    printf("\n");
+
     struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
     if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
         printf("Failed to set memory lock limit: %s\n", strerror(errno));
@@ -46,6 +84,22 @@ int main(int argc, char** argv)
 
     if (knock_bpf__load(skel) != 0) {
         printf("Failed to load BPF program\n");
+        knock_bpf__destroy(skel);
+        return 1;
+    }
+
+    __u32 key = 0;
+
+    if (bpf_map__update_elem(
+            skel->maps.target_port_map, &key, sizeof(key), &target_port, sizeof(target_port), 0)
+        != 0) {
+        printf("Failed to update target port configuration\n");
+        knock_bpf__destroy(skel);
+        return 1;
+    }
+
+    if (bpf_map__update_elem(skel->maps.config_map, &key, sizeof(key), &seq, sizeof(seq), 0) != 0) {
+        printf("Failed to update sequence configuration\n");
         knock_bpf__destroy(skel);
         return 1;
     }
