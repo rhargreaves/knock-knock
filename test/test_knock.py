@@ -84,7 +84,7 @@ def test_port_filtered_when_correct_code_udp_packet_sent_from_wrong_ip():
 
 
 @pytest.mark.usefixtures("loader")
-def test_port_filteed_when_wrong_code_udp_packet_sent():
+def test_port_filtered_when_wrong_code_udp_packet_sent():
     dst = "127.0.0.1"
 
     WRONG_CODE_1 = 1221
