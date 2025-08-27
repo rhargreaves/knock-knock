@@ -7,8 +7,8 @@ int knock(struct xdp_md* ctx)
     const u16 target_port = 6666;
 
     const struct port_sequence seq = {
-        .ports = { 1111, 2222 },
-        .length = 2,
+        .ports = { 1111, 2222, 3333 },
+        .length = 3,
         .timeout_ms = 1000,
     };
 
@@ -23,7 +23,7 @@ int knock(struct xdp_md* ctx)
         if (!state) {
             bpf_printk("State is not found");
             if (port == seq.ports[0]) {
-                bpf_printk("Updating state for port %d", port);
+                bpf_printk("Code 1 passed.");
                 struct ip_state new_state = {
                     .sequence_step = 0,
                     .last_packet_time = bpf_ktime_get_ns(),
@@ -35,9 +35,19 @@ int knock(struct xdp_md* ctx)
             return XDP_PASS;
         }
         if (port == seq.ports[1] && state->sequence_step == 0) {
-            bpf_printk("Updating state for port %d", port);
+            bpf_printk("Code 2 passed.");
             struct ip_state new_state = {
                 .sequence_step = 1,
+                .last_packet_time = bpf_ktime_get_ns(),
+                .sequence_complete = false,
+            };
+            bpf_map_update_elem(&ip_tracking_map, &source_ip, &new_state, BPF_ANY);
+            state = &new_state;
+        }
+        if (port == seq.ports[2] && state->sequence_step == 1) {
+            bpf_printk("Code 3 passed. Sequence complete.");
+            struct ip_state new_state = {
+                .sequence_step = 2,
                 .last_packet_time = bpf_ktime_get_ns(),
                 .sequence_complete = true,
             };
