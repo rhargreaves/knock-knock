@@ -2,20 +2,7 @@
 #include "vmlinux.h"
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_endian.h>
-
-#define MAX_SEQUENCE_LENGTH 10
-
-struct port_sequence {
-    __u16 ports[MAX_SEQUENCE_LENGTH];
-    __u8 length;
-    __u64 timeout_ms;
-};
-
-struct ip_state {
-    __u8 sequence_step;
-    __u64 last_packet_time;
-    bool sequence_complete;
-};
+#include "knock.h"
 
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
