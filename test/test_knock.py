@@ -1,7 +1,6 @@
-import socket
-
 import pytest
 from conftest import wait_for_trace
+from net import port_closed, port_filtered, send_udp_packet, send_udp_packet_from_ip
 
 TARGET_PORT = 6666
 
@@ -10,54 +9,7 @@ TARGET_PORT = 6666
 def test_port_filtered_by_default():
     dst = "127.0.0.1"
     assert port_filtered(dst, TARGET_PORT)
-    assert wait_for_trace("debug: tcp port: 6666", timeout=5.0)
-
-
-def send_udp_packet(dst, port):
-    print(f"Sending UDP packet to {dst}:{port}")
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        sock.sendto(b"", (dst, port))
-        print(f"Sent UDP packet to {dst}:{port}")
-    finally:
-        sock.close()
-
-
-def send_udp_packet_from_ip(dst, port, src_ip):
-    print(f"Sending UDP packet from {src_ip} to {dst}:{port}")
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        sock.bind((src_ip, 0))
-        sock.sendto(b"", (dst, port))
-        print(f"Sent UDP packet from {src_ip} to {dst}:{port}")
-    finally:
-        sock.close()
-
-
-def port_closed(dst, port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(1.0)
-    try:
-        sock.connect((dst, port))
-        return False
-    except ConnectionRefusedError:
-        return True
-    finally:
-        sock.close()
-
-
-def port_filtered(dst, port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(1.0)
-    try:
-        sock.connect((dst, port))
-        return False
-    except TimeoutError:
-        return True
-    except ConnectionRefusedError:
-        return False
-    finally:
-        sock.close()
+    assert wait_for_trace("debug: tcp port: 6666")
 
 
 @pytest.mark.usefixtures("loader")
@@ -69,12 +21,12 @@ def test_port_closed_when_correct_code_udp_packets_sent():
     CODE_3 = 3333
 
     send_udp_packet(dst, CODE_1)
-    assert wait_for_trace("info: code 1 passed", timeout=5.0)
+    assert wait_for_trace("info: code 1 passed")
     send_udp_packet(dst, CODE_2)
-    assert wait_for_trace("info: code 2 passed", timeout=5.0)
+    assert wait_for_trace("info: code 2 passed")
     send_udp_packet(dst, CODE_3)
-    assert wait_for_trace("info: code 3 passed", timeout=5.0)
-    assert wait_for_trace("info: sequence complete", timeout=5.0)
+    assert wait_for_trace("info: code 3 passed")
+    assert wait_for_trace("info: sequence complete")
 
     # should be closed rather than filtered now
     assert port_closed(dst, TARGET_PORT)
@@ -90,11 +42,11 @@ def test_port_filtered_when_wrong_code_sent_in_middle_of_correct_codes():
     CODE_3 = 3333
 
     send_udp_packet(dst, CODE_1)
-    assert wait_for_trace("info: code 1 passed", timeout=5.0)
+    assert wait_for_trace("info: code 1 passed")
     send_udp_packet(dst, CODE_2)
-    assert wait_for_trace("info: code 2 passed", timeout=5.0)
+    assert wait_for_trace("info: code 2 passed")
     send_udp_packet(dst, CODE_WRONG)
-    assert wait_for_trace("info: sequence reset", timeout=5.0)
+    assert wait_for_trace("info: sequence reset")
     send_udp_packet(dst, CODE_3)
 
     assert port_filtered(dst, TARGET_PORT)
