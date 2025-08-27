@@ -6,14 +6,13 @@ int knock(struct xdp_md* ctx)
 {
     const __u32 key = 0;
 
-    __u16* target_port_ptr = bpf_map_lookup_elem(&target_port_map, &key);
-    if (!target_port_ptr) {
-        bpf_printk("Target port is not found");
+    struct knock_config* config = bpf_map_lookup_elem(&config_map, &key);
+    if (!config) {
+        bpf_printk("Configuration is not found");
         return XDP_PASS;
     }
-    __u16 target_port = *target_port_ptr;
 
-    struct port_sequence* seq = bpf_map_lookup_elem(&config_map, &key);
+    struct port_sequence* seq = &config->seq;
     if (!seq) {
         bpf_printk("Sequence is not found");
         return XDP_PASS;
@@ -65,7 +64,7 @@ int knock(struct xdp_md* ctx)
 
     if (protocol == IPPROTO_TCP) {
         u16 port = lookup_port(ctx);
-        if (port == target_port) {
+        if (port == config->target_port) {
             bpf_printk("Hello tcp port %d", port);
 
             u32 source_ip = lookup_source_ip(ctx);

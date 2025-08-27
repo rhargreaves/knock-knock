@@ -16,6 +16,15 @@ void signal_handler(int sig) noexcept
     keep_running = 0;
 }
 
+static void print_config(const struct knock_config& config)
+{
+    printf("Target port: %d\n", config.target_port);
+    printf("Knock sequence: ");
+    for (int i = 0; i < config.seq.length; i++) {
+        printf("%d ", config.seq.ports[i]);
+    }
+}
+
 int main(int argc, char** argv)
 {
     signal(SIGINT, signal_handler);
@@ -41,21 +50,16 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    struct port_sequence seq;
+    struct knock_config config = { 0 };
+    config.target_port = target_port;
     if (argc > 3) {
-        seq.length = 0;
-        for (int i = 3; i < argc && seq.length < MAX_SEQUENCE_LENGTH; i++) {
-            seq.ports[seq.length] = atoi(argv[i]);
-            seq.length++;
+        config.seq.length = 0;
+        for (int i = 3; i < argc && config.seq.length < MAX_SEQUENCE_LENGTH; i++) {
+            config.seq.ports[config.seq.length] = atoi(argv[i]);
+            config.seq.length++;
         }
     }
-
-    printf("Target port: %d\n", target_port);
-    printf("Knock sequence: ");
-    for (int i = 0; i < seq.length; i++) {
-        printf("%d ", seq.ports[i]);
-    }
-    printf("\n");
+    print_config(config);
 
     struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
     if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
@@ -75,18 +79,10 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    __u32 key = 0;
-
-    if (bpf_map__update_elem(
-            skel->maps.target_port_map, &key, sizeof(key), &target_port, sizeof(target_port), 0)
+    const __u32 key = 0;
+    if (bpf_map__update_elem(skel->maps.config_map, &key, sizeof(key), &config, sizeof(config), 0)
         != 0) {
-        printf("Failed to update target port configuration\n");
-        knock_bpf__destroy(skel);
-        return 1;
-    }
-
-    if (bpf_map__update_elem(skel->maps.config_map, &key, sizeof(key), &seq, sizeof(seq), 0) != 0) {
-        printf("Failed to update sequence configuration\n");
+        printf("Failed to update configuration\n");
         knock_bpf__destroy(skel);
         return 1;
     }

@@ -18,3 +18,8 @@ struct ip_state {
     __u64 last_packet_time;
     bool sequence_complete;
 };
+
+struct knock_config {
+    __u16 target_port;
+    struct port_sequence seq;
+};
