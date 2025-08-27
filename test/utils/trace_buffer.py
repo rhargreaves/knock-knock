@@ -19,8 +19,6 @@ class TraceBuffer:
             return
         try:
             self.trace_file = open(TRACE_PIPE_PATH)
-
-            # Make the file descriptor non-blocking
             fd = self.trace_file.fileno()
             flags = fcntl.fcntl(fd, fcntl.F_GETFL)
             fcntl.fcntl(fd, fcntl.F_SETFL, flags | os.O_NONBLOCK)
