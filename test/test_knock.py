@@ -80,6 +80,25 @@ def test_port_closed_when_correct_code_udp_packets_sent():
 
 
 @pytest.mark.usefixtures("loader")
+def test_port_filtered_when_wrong_code_sent_in_middle_of_correct_codes():
+    dst = "127.0.0.1"
+
+    CODE_1 = 1111
+    CODE_2 = 2222
+    CODE_WRONG = 4444
+    CODE_3 = 3333
+
+    send_udp_packet(dst, CODE_1)
+    assert wait_for_trace("Code 1 passed.", timeout=5.0)
+    send_udp_packet(dst, CODE_2)
+    assert wait_for_trace("Code 2 passed.", timeout=5.0)
+    send_udp_packet(dst, CODE_WRONG)
+    send_udp_packet(dst, CODE_3)
+
+    assert port_filtered(dst, TARGET_PORT)
+
+
+@pytest.mark.usefixtures("loader")
 def test_port_filtered_when_only_one_code_udp_packet_sent():
     dst = "127.0.0.1"
 
