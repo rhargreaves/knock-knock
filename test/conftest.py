@@ -21,9 +21,9 @@ def require_root():
 
 @pytest.fixture()
 def loader():
-    bin_path = os.path.abspath(os.path.join(os.getcwd(), "build", "ping"))
+    bin_path = os.path.abspath(os.path.join(os.getcwd(), "build", "knock"))
     if not os.path.exists(bin_path):
-        pytest.skip("build/ping missing")
+        pytest.fail(f"bin_path missing: {bin_path}")
 
     # Initialize trace buffer
     trace_buffer.start_reading()

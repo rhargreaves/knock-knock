@@ -43,6 +43,7 @@ int main(int argc, char** argv)
         printf("Failed to open BPF skeleton\n");
         return 1;
     }
+
     if (knock_bpf__load(skel) != 0) {
         printf("Failed to load BPF program\n");
         knock_bpf__destroy(skel);

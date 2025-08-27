@@ -52,11 +52,5 @@ print-trace:
 .PHONY: print-trace
 
 clean:
-	rm -rf build
-	-sudo pkill -f "build/knock" 2>/dev/null
-	-sudo ip link show | grep -o '^[0-9]*: [^:]*' | while read line; do \
-		iface=$$(echo $$line | cut -d' ' -f2); \
-		sudo ip link set dev $$iface xdp off 2>/dev/null; \
-	done
-	-sudo rm -f /sys/fs/bpf/knock 2>/dev/null
+	rm -rf build src/vmlinux.h src/knock.skel.h src/knock.bpf.o
 .PHONY: clean
