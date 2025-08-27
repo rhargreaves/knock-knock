@@ -30,20 +30,17 @@ int knock(struct xdp_md* ctx)
                     .sequence_complete = false,
                 };
                 bpf_map_update_elem(&ip_tracking_map, &source_ip, &new_state, BPF_ANY);
-                state = &new_state;
             }
         } else {
-            if (state->sequence_step == 0 && port == seq.ports[1]) {
-                bpf_printk("Code 2 passed.");
-                state->sequence_step = 1;
+            if (state->sequence_step < seq.length && port == seq.ports[state->sequence_step + 1]) {
+                state->sequence_step = state->sequence_step + 1;
+
                 state->last_packet_time = bpf_ktime_get_ns();
-                state->sequence_complete = false;
-                bpf_map_update_elem(&ip_tracking_map, &source_ip, state, BPF_ANY);
-            } else if (state->sequence_step == 1 && port == seq.ports[2]) {
-                bpf_printk("Code 3 passed. Sequence complete.");
-                state->sequence_step = 2;
-                state->last_packet_time = bpf_ktime_get_ns();
-                state->sequence_complete = true;
+                state->sequence_complete = state->sequence_step == seq.length - 1;
+                bpf_printk("Code %d passed.", state->sequence_step + 1);
+                if (state->sequence_complete) {
+                    bpf_printk("Sequence complete.");
+                }
                 bpf_map_update_elem(&ip_tracking_map, &source_ip, state, BPF_ANY);
             } else {
                 bpf_printk("Code reset.");

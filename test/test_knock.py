@@ -73,7 +73,8 @@ def test_port_closed_when_correct_code_udp_packets_sent():
     send_udp_packet(dst, CODE_2)
     assert wait_for_trace("Code 2 passed.", timeout=5.0)
     send_udp_packet(dst, CODE_3)
-    assert wait_for_trace("Code 3 passed. Sequence complete.", timeout=5.0)
+    assert wait_for_trace("Code 3 passed.", timeout=5.0)
+    assert wait_for_trace("Sequence complete.", timeout=5.0)
 
     # should be closed rather than filtered now
     assert port_closed(dst, TARGET_PORT)
