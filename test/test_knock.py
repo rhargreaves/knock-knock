@@ -94,6 +94,7 @@ def test_port_filtered_when_wrong_code_sent_in_middle_of_correct_codes():
     send_udp_packet(dst, CODE_2)
     assert wait_for_trace("Code 2 passed.", timeout=5.0)
     send_udp_packet(dst, CODE_WRONG)
+    assert wait_for_trace("Sequence reset.", timeout=5.0)
     send_udp_packet(dst, CODE_3)
 
     assert port_filtered(dst, TARGET_PORT)

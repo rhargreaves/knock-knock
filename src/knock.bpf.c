@@ -43,7 +43,7 @@ int knock(struct xdp_md* ctx)
                 }
                 bpf_map_update_elem(&ip_tracking_map, &source_ip, state, BPF_ANY);
             } else {
-                bpf_printk("Code reset.");
+                bpf_printk("Sequence reset.");
                 bpf_map_delete_elem(&ip_tracking_map, &source_ip);
             }
         }
