@@ -32,6 +32,7 @@ def loader():
     proc = subprocess.Popen([bin_path, "lo"])
     time.sleep(1)
     yield proc
+    trace_buffer.print_trace()
     try:
         proc.send_signal(signal.SIGINT)
         try:
@@ -82,6 +83,12 @@ class TraceBuffer:
             self.trace_file.close()
             self.trace_file = None
         self.poller = None
+
+    def print_trace(self):
+        """Print the trace buffer"""
+        self._read_available_lines(timeout_ms=0)
+        for line in self.lines:
+            print(f"  {line}")
 
     def clear(self):
         """Clear the trace buffer"""

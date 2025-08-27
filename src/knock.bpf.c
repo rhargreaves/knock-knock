@@ -5,35 +5,47 @@ SEC("xdp")
 int knock(struct xdp_md* ctx)
 {
     const u16 target_port = 6666;
-    const u16 code_1 = 1111;
 
-    struct port_sequence seq = {
-        .ports = { 1111 },
-        .length = 1,
+    const struct port_sequence seq = {
+        .ports = { 1111, 2222 },
+        .length = 2,
         .timeout_ms = 1000,
     };
 
     long protocol = lookup_protocol(ctx);
     if (protocol == IPPROTO_UDP) {
         u16 port = lookup_port(ctx);
-        if (port == code_1) {
-            u32 source_ip = lookup_source_ip(ctx);
-            bpf_printk("Hello source ip %d", source_ip);
-            bpf_printk("Hello udp port %d", port);
+        u32 source_ip = lookup_source_ip(ctx);
+        bpf_printk("Hello source ip %d", source_ip);
+        bpf_printk("Hello udp port %d", port);
 
-            struct ip_state* state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
-            if (!state) {
+        struct ip_state* state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
+        if (!state) {
+            bpf_printk("State is not found");
+            if (port == seq.ports[0]) {
+                bpf_printk("Updating state for port %d", port);
                 struct ip_state new_state = {
-                    .sequence_step = 1,
+                    .sequence_step = 0,
                     .last_packet_time = bpf_ktime_get_ns(),
-                    .sequence_complete = true,
+                    .sequence_complete = false,
                 };
                 bpf_map_update_elem(&ip_tracking_map, &source_ip, &new_state, BPF_ANY);
                 state = &new_state;
             }
-
             return XDP_PASS;
         }
+        if (port == seq.ports[1] && state->sequence_step == 0) {
+            bpf_printk("Updating state for port %d", port);
+            struct ip_state new_state = {
+                .sequence_step = 1,
+                .last_packet_time = bpf_ktime_get_ns(),
+                .sequence_complete = true,
+            };
+            bpf_map_update_elem(&ip_tracking_map, &source_ip, &new_state, BPF_ANY);
+            state = &new_state;
+        }
+
+        return XDP_PASS;
     }
 
     if (protocol == IPPROTO_TCP) {
@@ -52,6 +64,7 @@ int knock(struct xdp_md* ctx)
                 bpf_printk("Allowing packet because sequence is complete");
                 return XDP_PASS;
             }
+            return XDP_DROP;
         }
     }
 

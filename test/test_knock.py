@@ -61,15 +61,28 @@ def port_filtered(dst, port):
 
 
 @pytest.mark.usefixtures("loader")
-def test_port_closed_when_correct_code_udp_packet_sent():
+def test_port_closed_when_correct_code_udp_packets_sent():
+    dst = "127.0.0.1"
+
+    CODE_1 = 1111
+    CODE_2 = 2222
+
+    send_udp_packet(dst, CODE_1)
+    send_udp_packet(dst, CODE_2)
+
+    # should be closed rather than filtered now
+    assert port_closed(dst, TARGET_PORT)
+
+
+@pytest.mark.usefixtures("loader")
+def test_port_filtered_when_only_one_code_udp_packet_sent():
     dst = "127.0.0.1"
 
     CODE_1 = 1111
 
     send_udp_packet(dst, CODE_1)
 
-    # should be closed rather than filtered now
-    assert port_closed(dst, TARGET_PORT)
+    assert port_filtered(dst, TARGET_PORT)
 
 
 @pytest.mark.usefixtures("loader")
