@@ -2,3 +2,4 @@ CompileFlags:
   Add:
     - -ferror-limit=0
     - -I/workspaces/knock-knock/deps/CLI11/include
+    - -Werror
