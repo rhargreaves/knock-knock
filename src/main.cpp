@@ -3,9 +3,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include <signal.h>
-#include <cstring>
-#include <cerrno>
-#include <cstdio>
+#include <iostream>
 #include "knock.skel.h"
 #include "knock.h"
 
@@ -18,11 +16,12 @@ void signal_handler(int sig) noexcept
 
 static void print_config(const struct knock_config& config)
 {
-    printf("Target port: %d\n", config.target_port);
-    printf("Knock sequence: ");
+    std::cout << "Target port: " << config.target_port << '\n';
+    std::cout << "Knock sequence: ";
     for (int i = 0; i < config.seq.length; i++) {
-        printf("%d ", config.seq.ports[i]);
+        std::cout << config.seq.ports[i] << ' ';
     }
+    std::cout << '\n';
 }
 
 int main(int argc, char** argv)
@@ -31,14 +30,14 @@ int main(int argc, char** argv)
     signal(SIGTERM, signal_handler);
 
     if (argc < 2) {
-        printf("Usage: %s <interface> <target_port> [<sequence_length>]\n", argv[0]);
+        std::cerr << "Usage: " << argv[0] << " <interface> <target_port> [<sequence_length>]\n";
         return 1;
     }
 
     const char* ifname = argv[1];
     int ifindex = if_nametoindex(ifname);
     if (!ifindex) {
-        printf("Failed to get interface index for %s\n", ifname);
+        std::cerr << "Failed to get interface index for " << ifname << '\n';
         return 1;
     }
 
@@ -46,17 +45,17 @@ int main(int argc, char** argv)
     if (argc > 2) {
         target_port = atoi(argv[2]);
     } else {
-        printf("Target port is not specified\n");
+        std::cerr << "Target port is not specified\n";
         return 1;
     }
 
     if (argc < 4) {
-        printf("Sequence not specified\n");
+        std::cerr << "Sequence not specified\n";
         return 1;
     }
 
     if (argc > MAX_SEQUENCE_LENGTH + 3) {
-        printf("Error: sequence length is too long\n");
+        std::cerr << "Error: sequence length is too long\n";
         return 1;
     }
 
@@ -73,18 +72,19 @@ int main(int argc, char** argv)
 
     struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
     if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
-        printf("Failed to set memory lock limit: %s\n", strerror(errno));
+        std::cerr << "Failed to set memory lock limit: " << std::system_category().message(errno)
+                  << '\n';
         return 1;
     }
 
     knock_bpf* skel = knock_bpf__open();
     if (!skel) {
-        printf("Failed to open BPF skeleton\n");
+        std::cerr << "Failed to open BPF skeleton\n";
         return 1;
     }
 
     if (knock_bpf__load(skel) != 0) {
-        printf("Failed to load BPF program\n");
+        std::cerr << "Failed to load BPF program\n";
         knock_bpf__destroy(skel);
         return 1;
     }
@@ -92,20 +92,20 @@ int main(int argc, char** argv)
     const __u32 key = 0;
     if (bpf_map__update_elem(skel->maps.config_map, &key, sizeof(key), &config, sizeof(config), 0)
         != 0) {
-        printf("Failed to update configuration\n");
+        std::cerr << "Failed to update configuration\n";
         knock_bpf__destroy(skel);
         return 1;
     }
 
     bpf_link* link = bpf_program__attach_xdp(skel->progs.knock, ifindex);
     if (!link) {
-        printf("Failed to attach XDP program\n");
+        std::cerr << "Failed to attach XDP program\n";
         knock_bpf__destroy(skel);
         return 1;
     }
 
-    printf("Attached XDP program to %s\n", ifname);
-    printf("Waiting for packets (Ctrl+C to exit)...\n");
+    std::cout << "Attached XDP program to " << ifname << '\n';
+    std::cout << "Waiting for packets (Ctrl+C to exit)...\n";
 
     while (keep_running) {
         sleep(1);
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 
     bpf_link__destroy(link);
     knock_bpf__destroy(skel);
-    printf("Detached XDP program from %s\n", ifname);
+    std::cout << "Detached XDP program from " << ifname << '\n';
 
     return 0;
 }
