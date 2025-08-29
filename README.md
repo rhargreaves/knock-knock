@@ -24,8 +24,9 @@ make test
 
 ### Help
 
-```sh
+```
 $ build/knock --help
+
 Knock Knock 👊👊🚪
 Port knocking implemention in eBPF
 

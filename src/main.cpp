@@ -41,10 +41,10 @@ static std::optional<cli_args> parse_args(int argc, char** argv)
         "Display program version information and exit");
 
     cli_args args;
-    app.add_option("interface", args.interface, "Network interface to monitor (e.g., eth0, lo)")
+    app.add_option("interface", args.interface, "Network interface to attach to (e.g., eth0, lo)")
         ->required();
 
-    app.add_option("target_port", args.target_port, "Target port to protect")
+    app.add_option("target_port", args.target_port, "Port to protect")
         ->required()
         ->check(CLI::Range(1, 65535));
 
