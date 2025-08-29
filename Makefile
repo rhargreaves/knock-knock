@@ -30,7 +30,7 @@ load-bpf:
 .PHONY: load-bpf
 
 run:
-	sudo build/knock lo
+	sudo build/knock lo 8080 123 456 789
 .PHONY: run
 
 lint-tests:
