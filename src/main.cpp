@@ -35,7 +35,7 @@ static void set_memory_limit()
 {
     struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
     if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
-        throw std::system_error(errno, std::system_category(), "Failed to set memory lock limit");
+        throw std::system_error(errno, std::system_category(), "failed to set memory lock limit");
     }
 }
 
