@@ -1,7 +1,7 @@
 .SHELL := /bin/bash
 .ONESHELL:
 
-LIBBPF_A := libbpf/src/libbpf.a
+LIBBPF_A := deps/libbpf/src/libbpf.a
 CLI11_INCLUDE := deps/CLI11/include
 
 # PYTEST_ARGS := --capture=no

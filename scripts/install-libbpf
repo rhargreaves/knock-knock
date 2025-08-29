@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
 
-cd libbpf/src
+cd deps/libbpf/src
 sudo -E make install
-cd ../..
+cd ../../..
