@@ -7,6 +7,9 @@ import time
 import pytest
 from utils.trace_buffer import TraceBuffer
 
+DEFAULT_TARGET_PORT = 6666
+DEFAULT_KNOCK_SEQUENCE = [1111, 2222, 3333]
+
 
 def require_cmd(cmd):
     return shutil.which(cmd) is not None
@@ -19,7 +22,13 @@ def require_root():
 
 
 @pytest.fixture()
-def loader():
+def loader(request):
+    config = getattr(
+        request,
+        "param",
+        {"target_port": DEFAULT_TARGET_PORT, "knock_sequence": DEFAULT_KNOCK_SEQUENCE},
+    )
+
     bin_path = os.path.abspath(os.path.join(os.getcwd(), "build", "knock"))
     if not os.path.exists(bin_path):
         pytest.fail(f"bin_path missing: {bin_path}")
@@ -27,9 +36,16 @@ def loader():
     trace_buffer.start_reading()
     trace_buffer.clear()
 
-    proc = subprocess.Popen([bin_path, "lo", "6666", "1111", "2222", "3333"])
+    proc = subprocess.Popen(
+        [
+            bin_path,
+            "lo",
+            str(config["target_port"]),
+            *map(str, config["knock_sequence"]),
+        ]
+    )
     time.sleep(0.5)
-    yield proc
+    yield config, proc
     trace_buffer.print_trace()
     try:
         proc.send_signal(signal.SIGINT)
