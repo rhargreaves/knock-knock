@@ -10,7 +10,7 @@
 #include <optional>
 #include <CLI/CLI.hpp>
 #include "knock.h"
-#include "bpf_program.cpp"
+#include "bpf_program.hpp"
 
 static volatile sig_atomic_t keep_running = 1;
 
