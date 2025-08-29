@@ -92,6 +92,16 @@ static bool set_memory_limit()
     return true;
 }
 
+static void parse_config(const cli_args& args, struct knock_config& config)
+{
+    config.target_port = args.target_port;
+    config.seq.length = args.sequence.size();
+    config.seq.timeout_ms = args.timeout;
+    for (size_t i = 0; i < args.sequence.size(); i++) {
+        config.seq.ports[i] = args.sequence[i];
+    }
+}
+
 int main(int argc, char** argv)
 {
     signal(SIGINT, signal_handler);
@@ -112,27 +122,15 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
+    struct knock_config config;
+    parse_config(*args, config);
+    print_config(config);
+
     try {
+
         BpfProgram bpf_program;
-
-        struct knock_config config = { 0 };
-        config.target_port = args->target_port;
-        config.seq.length = args->sequence.size();
-        config.seq.timeout_ms = args->timeout;
-        for (size_t i = 0; i < args->sequence.size(); i++) {
-            config.seq.ports[i] = args->sequence[i];
-        }
-        print_config(config);
-
-        if (!bpf_program.configure(config)) {
-            std::cerr << "Failed to update configuration\n";
-            return EXIT_FAILURE;
-        }
-
-        if (!bpf_program.attach_xdp(ifindex, args->interface)) {
-            std::cerr << "Failed to attach XDP program\n";
-            return EXIT_FAILURE;
-        }
+        bpf_program.configure(config);
+        bpf_program.attach_xdp(ifindex, args->interface);
 
         std::cout << "Attached XDP program to " << args->interface << '\n';
         std::cout << "Waiting for packets (Ctrl+C to exit)...\n";

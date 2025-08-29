@@ -27,20 +27,20 @@ BpfProgram::~BpfProgram()
     }
 }
 
-bool BpfProgram::configure(const knock_config& config)
+void BpfProgram::configure(const knock_config& config)
 {
     const __u32 key = 0;
-    return bpf_map__update_elem(
-               skel->maps.config_map, &key, sizeof(key), &config, sizeof(config), 0)
-        == 0;
+    if (bpf_map__update_elem(skel->maps.config_map, &key, sizeof(key), &config, sizeof(config), 0)
+        != 0) {
+        throw std::runtime_error("Failed to update BPF configuration");
+    }
 }
 
-bool BpfProgram::attach_xdp(int ifindex, const std::string& interface)
+void BpfProgram::attach_xdp(int ifindex, const std::string& interface)
 {
     link = bpf_program__attach_xdp(skel->progs.knock, ifindex);
-    if (link) {
-        interface_name = interface;
-        return true;
+    if (!link) {
+        throw std::runtime_error("Failed to attach XDP program to interface " + interface);
     }
-    return false;
+    interface_name = interface;
 }

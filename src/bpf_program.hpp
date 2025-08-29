@@ -18,6 +18,6 @@ public:
     BpfProgram(BpfProgram&&) = delete;
     BpfProgram& operator=(BpfProgram&&) = delete;
 
-    bool configure(const knock_config& config);
-    bool attach_xdp(int ifindex, const std::string& interface);
+    void configure(const knock_config& config);
+    void attach_xdp(int ifindex, const std::string& interface);
 };
