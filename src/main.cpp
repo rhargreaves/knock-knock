@@ -90,6 +90,16 @@ static void set_memory_limit()
     }
 }
 
+static int get_interface_index(const std::string& interface_name)
+{
+    int ifindex = if_nametoindex(interface_name.c_str());
+    if (!ifindex) {
+        throw std::system_error(
+            errno, std::system_category(), "failed to get interface index for " + interface_name);
+    }
+    return ifindex;
+}
+
 static void parse_config(const cli_args& args, struct knock_config& config)
 {
     config.target_port = args.target_port;
@@ -110,18 +120,13 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    int ifindex = if_nametoindex(args->interface.c_str());
-    if (!ifindex) {
-        std::cerr << "failed to get interface index for " << args->interface << '\n';
-        return EXIT_FAILURE;
-    }
-
     struct knock_config config;
     parse_config(*args, config);
     print_config(config);
 
     try {
         set_memory_limit();
+        int ifindex = get_interface_index(args->interface);
         BpfProgram bpf_program;
         bpf_program.configure(config);
         bpf_program.attach_xdp(ifindex, args->interface);
