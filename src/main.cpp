@@ -50,6 +50,11 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    if (argc > MAX_SEQUENCE_LENGTH + 3) {
+        printf("Error: sequence length is too long\n");
+        return 1;
+    }
+
     struct knock_config config = { 0 };
     config.target_port = target_port;
     if (argc > 3) {

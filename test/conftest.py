@@ -42,10 +42,13 @@ def loader(request):
             "lo",
             str(config["target_port"]),
             *map(str, config["knock_sequence"]),
-        ]
+        ],
+        text=True,
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
     )
     time.sleep(0.5)
-    yield config
+    yield config, proc
     trace_buffer.print_trace()
     try:
         proc.send_signal(signal.SIGINT)

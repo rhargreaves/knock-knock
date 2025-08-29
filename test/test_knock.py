@@ -21,8 +21,10 @@ WRONG_CODE = 4444
     indirect=True,
 )
 def test_port_filtered_by_default(loader):
-    assert port_filtered(DST_IP, loader["target_port"])
-    assert wait_for_trace(f"debug: tcp port: {loader['target_port']}")
+    config, _ = loader
+
+    assert port_filtered(DST_IP, config["target_port"])
+    assert wait_for_trace(f"debug: tcp port: {config['target_port']}")
 
 
 @pytest.mark.usefixtures("loader")
@@ -49,7 +51,8 @@ def test_port_closed_when_correct_code_udp_packets_sent():
     indirect=True,
 )
 def test_port_closed_when_correct_codes_sent(loader):
-    for i, code in enumerate(loader["knock_sequence"]):
+    config, _ = loader
+    for i, code in enumerate(config["knock_sequence"]):
         send_udp_packet(DST_IP, code)
         assert wait_for_trace(f"info: code {i + 1} passed")
 
@@ -58,7 +61,7 @@ def test_port_closed_when_correct_codes_sent(loader):
 
 
 @pytest.mark.usefixtures("loader")
-def test_port_filtered_when_wrong_code_sent_in_middle_of_correct_codes(loader):
+def test_port_filtered_when_wrong_code_sent_in_middle_of_correct_codes():
     send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[0])
     assert wait_for_trace("info: code 1 passed")
     send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[1])
@@ -89,3 +92,14 @@ def test_port_filtered_when_wrong_code_udp_packet_sent():
     send_udp_packet(DST_IP, WRONG_CODE)
 
     assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
+
+
+@pytest.mark.parametrize(
+    "loader",
+    [{"target_port": DEFAULT_TARGET_PORT, "knock_sequence": [123] * 11}],
+    indirect=True,
+)
+def test_rejects_sequence_longer_than_max_length(loader):
+    _, proc = loader
+
+    assert "Error: sequence length is too long" in proc.stdout.read()
