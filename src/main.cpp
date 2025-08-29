@@ -9,66 +9,15 @@
 #include <vector>
 #include <optional>
 #include <system_error>
-#include <CLI/CLI.hpp>
 #include "knock.h"
 #include "bpf_program.hpp"
+#include "cli_args.hpp"
 
 static volatile sig_atomic_t keep_running = 1;
-
-static constexpr std::string_view VERSION = "1.0.0";
 
 void signal_handler(int sig) noexcept
 {
     keep_running = 0;
-}
-
-struct cli_args {
-    std::string interface;
-    __u16 target_port;
-    std::vector<__u16> sequence;
-    __u64 timeout;
-};
-
-static std::optional<cli_args> parse_args(int argc, char** argv)
-{
-    CLI::App app { "Knock Knock 👊👊🚪\nPort knocking implemention in eBPF" };
-
-    app.add_flag_callback(
-        "--version",
-        []() {
-            std::cout << VERSION << std::endl;
-            exit(0);
-        },
-        "Display program version information and exit");
-
-    cli_args args;
-    app.add_option("interface", args.interface, "Network interface to attach to (e.g., eth0, lo)")
-        ->required();
-
-    app.add_option("target_port", args.target_port, "Port to protect")
-        ->required()
-        ->check(CLI::Range(1, 65535));
-
-    app.add_option("sequence", args.sequence, "Knock sequence ports (space-separated)")
-        ->required()
-        ->check(CLI::Range(1, 65535));
-
-    app.add_option("-t,--timeout", args.timeout, "Sequence timeout in milliseconds")
-        ->default_val(5000);
-
-    try {
-        app.parse(argc, argv);
-    } catch (const CLI::ParseError& e) {
-        app.exit(e);
-        return std::nullopt;
-    }
-
-    if (args.sequence.size() > MAX_SEQUENCE_LENGTH) {
-        std::cerr << "error: sequence length cannot exceed " << MAX_SEQUENCE_LENGTH << std::endl;
-        return std::nullopt;
-    }
-
-    return args;
 }
 
 static void print_config(const struct knock_config& config)
