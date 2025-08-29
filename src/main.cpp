@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <optional>
+#include <system_error>
 #include <CLI/CLI.hpp>
 #include "knock.h"
 #include "bpf_program.hpp"
@@ -63,7 +64,7 @@ static std::optional<cli_args> parse_args(int argc, char** argv)
     }
 
     if (args.sequence.size() > MAX_SEQUENCE_LENGTH) {
-        std::cerr << "Error: sequence length cannot exceed " << MAX_SEQUENCE_LENGTH << std::endl;
+        std::cerr << "error: sequence length cannot exceed " << MAX_SEQUENCE_LENGTH << std::endl;
         return std::nullopt;
     }
 
@@ -72,21 +73,20 @@ static std::optional<cli_args> parse_args(int argc, char** argv)
 
 static void print_config(const struct knock_config& config)
 {
-    std::cout << "Target port: " << config.target_port << '\n';
-    std::cout << "Knock sequence: ";
+    std::cout << "target port: " << config.target_port << '\n';
+    std::cout << "knock sequence: ";
     for (int i = 0; i < config.seq.length; i++) {
         std::cout << config.seq.ports[i] << ' ';
     }
     std::cout << '\n';
-    std::cout << "Timeout: " << config.seq.timeout_ms << " ms\n";
+    std::cout << "timeout: " << config.seq.timeout_ms << " ms\n";
 }
 
 static void set_memory_limit()
 {
     struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
     if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
-        throw std::runtime_error(
-            "Failed to set memory lock limit: " + std::system_category().message(errno));
+        throw std::system_error(errno, std::system_category(), "Failed to set memory lock limit");
     }
 }
 
@@ -112,7 +112,7 @@ int main(int argc, char** argv)
 
     int ifindex = if_nametoindex(args->interface.c_str());
     if (!ifindex) {
-        std::cerr << "Failed to get interface index for " << args->interface << '\n';
+        std::cerr << "failed to get interface index for " << args->interface << '\n';
         return EXIT_FAILURE;
     }
 
@@ -126,18 +126,18 @@ int main(int argc, char** argv)
         bpf_program.configure(config);
         bpf_program.attach_xdp(ifindex, args->interface);
 
-        std::cout << "Attached XDP program to " << args->interface << '\n';
-        std::cout << "Waiting for packets (Ctrl+C to exit)...\n";
+        std::cout << "attached XDP program to " << args->interface << '\n';
+        std::cout << "waiting for packets (Ctrl+C to exit)...\n";
 
         while (keep_running) {
             sleep(1);
         }
 
-        std::cout << "Detached XDP program from " << args->interface << '\n';
+        std::cout << "detached XDP program from " << args->interface << '\n';
         return EXIT_SUCCESS;
 
     } catch (const std::exception& e) {
-        std::cerr << "BPF error: " << e.what() << '\n';
+        std::cerr << "error: " << e.what() << '\n';
         return EXIT_FAILURE;
     }
 }
