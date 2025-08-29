@@ -51,11 +51,11 @@ static int get_interface_index(const std::string& interface_name)
 
 static void parse_config(const cli_args& args, struct knock_config& config)
 {
-    config.target_port = args.target_port;
-    config.seq.length = args.sequence.size();
-    config.seq.timeout_ms = args.timeout;
+    config.target_port = static_cast<__u16>(args.target_port);
+    config.seq.length = static_cast<__u8>(args.sequence.size());
+    config.seq.timeout_ms = static_cast<__u64>(args.timeout);
     for (size_t i = 0; i < args.sequence.size(); i++) {
-        config.seq.ports[i] = args.sequence[i];
+        config.seq.ports[i] = static_cast<__u16>(args.sequence[i]);
     }
 }
 

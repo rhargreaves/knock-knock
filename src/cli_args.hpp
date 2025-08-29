@@ -2,13 +2,13 @@
 #include <string>
 #include <vector>
 #include <optional>
-#include <linux/types.h>
+#include <cstdint>
 
 struct cli_args {
     std::string interface;
-    __u16 target_port;
-    std::vector<__u16> sequence;
-    __u64 timeout;
+    std::uint16_t target_port;
+    std::vector<std::uint16_t> sequence;
+    std::uint64_t timeout;
 };
 
 std::optional<cli_args> parse_args(int argc, char** argv);
