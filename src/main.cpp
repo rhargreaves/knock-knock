@@ -31,7 +31,7 @@ int main(int argc, char** argv)
     signal(SIGTERM, signal_handler);
 
     if (argc < 2) {
-        printf("Usage: %s <interface>\n", argv[0]);
+        printf("Usage: %s <interface> <target_port> [<sequence_length>]\n", argv[0]);
         return 1;
     }
 
@@ -47,6 +47,11 @@ int main(int argc, char** argv)
         target_port = atoi(argv[2]);
     } else {
         printf("Target port is not specified\n");
+        return 1;
+    }
+
+    if (argc < 4) {
+        printf("Sequence not specified\n");
         return 1;
     }
 

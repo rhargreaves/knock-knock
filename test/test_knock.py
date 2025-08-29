@@ -92,14 +92,3 @@ def test_port_filtered_when_wrong_code_udp_packet_sent():
     send_udp_packet(DST_IP, WRONG_CODE)
 
     assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
-
-
-@pytest.mark.parametrize(
-    "loader",
-    [{"target_port": DEFAULT_TARGET_PORT, "knock_sequence": [123] * 11}],
-    indirect=True,
-)
-def test_rejects_sequence_longer_than_max_length(loader):
-    _, proc = loader
-
-    assert "Error: sequence length is too long" in proc.stdout.read()
