@@ -7,7 +7,6 @@ class BpfProgram {
 private:
     knock_bpf* skel = nullptr;
     bpf_link* link = nullptr;
-    std::string interface_name;
 
 public:
     explicit BpfProgram(const knock_config& config);

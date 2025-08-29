@@ -53,5 +53,4 @@ void BpfProgram::attach_xdp(int ifindex, const std::string& interface)
     if (!link) {
         throw BpfError("Failed to attach XDP program to interface " + interface);
     }
-    interface_name = interface;
 }
