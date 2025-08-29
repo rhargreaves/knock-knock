@@ -2,6 +2,7 @@
 .ONESHELL:
 
 LIBBPF_A := libbpf/src/libbpf.a
+CLI11_INCLUDE := deps/CLI11/include
 
 # PYTEST_ARGS := --capture=no
 PYTEST_ARGS :=
@@ -20,7 +21,7 @@ src/knock.skel.h: src/knock.bpf.o
 
 build: src/knock.skel.h $(LIBBPF_A)
 	mkdir -p build
-	clang++ -g -O2 -Isrc -o build/knock src/main.cpp \
+	clang++ -g -O2 -Isrc -I$(CLI11_INCLUDE) -o build/knock src/main.cpp \
 		$(LIBBPF_A) -lelf -lz
 .PHONY: build
 

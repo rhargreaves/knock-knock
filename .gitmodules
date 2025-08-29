@@ -1,3 +1,6 @@
 [submodule "libbpf"]
 	path = libbpf
 	url = https://github.com/libbpf/libbpf
+[submodule "deps/CLI11"]
+	path = deps/CLI11
+	url = https://github.com/CLIUtils/CLI11.git

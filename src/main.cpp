@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <signal.h>
 #include <iostream>
+#include <vector>
+#include <CLI/CLI.hpp>
 #include "knock.skel.h"
 #include "knock.h"
 
@@ -29,44 +31,57 @@ int main(int argc, char** argv)
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
-    if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <interface> <target_port> [<sequence_length>]\n";
+    CLI::App app { "Knock knock! Port knocking implemention in eBPF" };
+
+    app.add_flag_callback(
+        "--version",
+        []() {
+            std::cout << "1.0.0" << std::endl;
+            exit(0);
+        },
+        "Display program version information and exit");
+
+    std::string interface;
+    __u16 target_port = 0;
+    std::vector<__u16> sequence;
+    __u64 timeout = 5000;
+
+    app.add_option("interface", interface, "Network interface to monitor (e.g., eth0, lo)")
+        ->required();
+
+    app.add_option("target_port", target_port, "Target port to protect")
+        ->required()
+        ->check(CLI::Range(1, 65535));
+
+    app.add_option("sequence", sequence, "Knock sequence ports (space-separated)")
+        ->required()
+        ->check(CLI::Range(1, 65535));
+
+    app.add_option("-t,--timeout", timeout, "Sequence timeout in milliseconds")->default_val(5000);
+
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError& e) {
+        return app.exit(e);
+    }
+
+    if (sequence.size() > MAX_SEQUENCE_LENGTH) {
+        std::cerr << "Error: sequence length cannot exceed " << MAX_SEQUENCE_LENGTH << std::endl;
         return 1;
     }
 
-    const char* ifname = argv[1];
-    int ifindex = if_nametoindex(ifname);
+    int ifindex = if_nametoindex(interface.c_str());
     if (!ifindex) {
-        std::cerr << "Failed to get interface index for " << ifname << '\n';
-        return 1;
-    }
-
-    __u16 target_port;
-    if (argc > 2) {
-        target_port = atoi(argv[2]);
-    } else {
-        std::cerr << "Target port is not specified\n";
-        return 1;
-    }
-
-    if (argc < 4) {
-        std::cerr << "Sequence not specified\n";
-        return 1;
-    }
-
-    if (argc > MAX_SEQUENCE_LENGTH + 3) {
-        std::cerr << "Error: sequence length is too long\n";
+        std::cerr << "Failed to get interface index for " << interface << '\n';
         return 1;
     }
 
     struct knock_config config = { 0 };
     config.target_port = target_port;
-    if (argc > 3) {
-        config.seq.length = 0;
-        for (int i = 3; i < argc && config.seq.length < MAX_SEQUENCE_LENGTH; i++) {
-            config.seq.ports[config.seq.length] = atoi(argv[i]);
-            config.seq.length++;
-        }
+    config.seq.length = sequence.size();
+    config.seq.timeout_ms = timeout;
+    for (size_t i = 0; i < sequence.size(); i++) {
+        config.seq.ports[i] = sequence[i];
     }
     print_config(config);
 
@@ -104,7 +119,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    std::cout << "Attached XDP program to " << ifname << '\n';
+    std::cout << "Attached XDP program to " << interface << '\n';
     std::cout << "Waiting for packets (Ctrl+C to exit)...\n";
 
     while (keep_running) {
@@ -113,7 +128,7 @@ int main(int argc, char** argv)
 
     bpf_link__destroy(link);
     knock_bpf__destroy(skel);
-    std::cout << "Detached XDP program from " << ifname << '\n';
+    std::cout << "Detached XDP program from " << interface << '\n';
 
     return 0;
 }
