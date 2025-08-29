@@ -45,7 +45,7 @@ def loader(request):
         ]
     )
     time.sleep(0.5)
-    yield config, proc
+    yield config
     trace_buffer.print_trace()
     try:
         proc.send_signal(signal.SIGINT)

@@ -11,10 +11,18 @@ DST_IP = "127.0.0.1"
 WRONG_CODE = 4444
 
 
-@pytest.mark.usefixtures("loader")
-def test_port_filtered_by_default():
-    assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
-    assert wait_for_trace(f"debug: tcp port: {DEFAULT_TARGET_PORT}")
+@pytest.mark.parametrize(
+    "loader",
+    [
+        {"target_port": DEFAULT_TARGET_PORT, "knock_sequence": DEFAULT_KNOCK_SEQUENCE},
+        {"target_port": 1024, "knock_sequence": DEFAULT_KNOCK_SEQUENCE},
+        {"target_port": 65535, "knock_sequence": DEFAULT_KNOCK_SEQUENCE},
+    ],
+    indirect=True,
+)
+def test_port_filtered_by_default(loader):
+    assert port_filtered(DST_IP, loader["target_port"])
+    assert wait_for_trace(f"debug: tcp port: {loader['target_port']}")
 
 
 @pytest.mark.usefixtures("loader")
