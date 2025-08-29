@@ -24,35 +24,34 @@ static __always_inline int handle_udp_knock(
     log_debug("source ip: %d", source_ip);
     log_debug("udp port: %d", port);
 
-    struct ip_state* state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
+    struct ip_state new_state
+        = { .sequence_step = 0, .last_packet_time = 0, .sequence_complete = false };
+    struct ip_state* existing_state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
+    struct ip_state* state = existing_state != NULL ? existing_state : &new_state;
 
-    if (!state) {
-        if (port == seq->ports[0]) {
-            log_info("code 1 passed");
-            struct ip_state new_state = {
-                .sequence_step = 0,
-                .last_packet_time = bpf_ktime_get_ns(),
-                .sequence_complete = false,
-            };
-            bpf_map_update_elem(&ip_tracking_map, &source_ip, &new_state, BPF_ANY);
+    if (state->sequence_step >= seq->length) {
+        log_error("sequence step > length");
+        return XDP_PASS;
+    }
+
+    if (state->sequence_step >= MAX_SEQUENCE_LENGTH) {
+        log_error("sequence step out of bounds");
+        return XDP_PASS;
+    }
+
+    if (port == seq->ports[state->sequence_step]) {
+        state->sequence_step++;
+        state->last_packet_time = bpf_ktime_get_ns();
+        state->sequence_complete = (state->sequence_step == seq->length);
+
+        log_info("code %d passed", state->sequence_step);
+        if (state->sequence_complete) {
+            log_info("sequence complete");
         }
-    } else {
-        if (state->sequence_step < seq->length && state->sequence_step + 1 < MAX_SEQUENCE_LENGTH
-            && port == seq->ports[state->sequence_step + 1]) {
-
-            state->sequence_step++;
-            state->last_packet_time = bpf_ktime_get_ns();
-            state->sequence_complete = (state->sequence_step == seq->length - 1);
-
-            log_info("code %d passed", state->sequence_step + 1);
-            if (state->sequence_complete) {
-                log_info("sequence complete");
-            }
-            bpf_map_update_elem(&ip_tracking_map, &source_ip, state, BPF_ANY);
-        } else {
-            log_info("sequence reset");
-            bpf_map_delete_elem(&ip_tracking_map, &source_ip);
-        }
+        bpf_map_update_elem(&ip_tracking_map, &source_ip, state, BPF_ANY);
+    } else if (existing_state) {
+        log_info("sequence reset");
+        bpf_map_delete_elem(&ip_tracking_map, &source_ip);
     }
 
     return XDP_PASS;

@@ -39,8 +39,26 @@ def test_port_closed_when_correct_code_udp_packets_sent():
     assert port_closed(DST_IP, DEFAULT_TARGET_PORT)
 
 
+@pytest.mark.parametrize(
+    "loader",
+    [
+        {"target_port": DEFAULT_TARGET_PORT, "knock_sequence": [123, 456, 789]},
+        {"target_port": DEFAULT_TARGET_PORT, "knock_sequence": [123, 456]},
+        {"target_port": DEFAULT_TARGET_PORT, "knock_sequence": [123]},
+    ],
+    indirect=True,
+)
+def test_port_closed_when_correct_codes_sent(loader):
+    for i, code in enumerate(loader["knock_sequence"]):
+        send_udp_packet(DST_IP, code)
+        assert wait_for_trace(f"info: code {i + 1} passed")
+
+    assert wait_for_trace("info: sequence complete")
+    assert port_closed(DST_IP, DEFAULT_TARGET_PORT)
+
+
 @pytest.mark.usefixtures("loader")
-def test_port_filtered_when_wrong_code_sent_in_middle_of_correct_codes():
+def test_port_filtered_when_wrong_code_sent_in_middle_of_correct_codes(loader):
     send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[0])
     assert wait_for_trace("info: code 1 passed")
     send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[1])
