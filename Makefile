@@ -55,3 +55,7 @@ print-trace:
 clean:
 	rm -rf build src/vmlinux.h src/knock.skel.h src/knock.bpf.o
 .PHONY: clean
+
+init-submodules:
+	git submodule update --init --recursive
+.PHONY: init-submodules
