@@ -24,8 +24,8 @@ static void print_config(const struct knock_config& config)
 {
     std::cout << "target port: " << config.target_port << '\n';
     std::cout << "knock sequence: ";
-    for (int i = 0; i < config.seq.length; i++) {
-        std::cout << config.seq.ports[i] << ' ';
+    for (const auto& port : config.seq.ports) {
+        std::cout << port << ' ';
     }
     std::cout << '\n';
     std::cout << "timeout: " << config.seq.timeout_ms << " ms\n";
