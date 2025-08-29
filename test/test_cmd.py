@@ -10,7 +10,7 @@ from conftest import DEFAULT_TARGET_PORT
 def test_rejects_sequence_longer_than_max_length(loader):
     _, proc = loader
 
-    assert "Error: sequence length cannot exceed 10" in proc.stderr.read()
+    assert "error: sequence length cannot exceed 10" in proc.stderr.read()
 
 
 @pytest.mark.parametrize(
