@@ -9,6 +9,8 @@
 #include <vector>
 #include <optional>
 #include <system_error>
+#include <thread>
+#include <chrono>
 #include "knock.h"
 #include "bpf_program.hpp"
 #include "cli_args.hpp"
@@ -84,7 +86,7 @@ int main(int argc, char** argv)
         std::cout << "waiting for packets (Ctrl+C to exit)...\n";
 
         while (keep_running) {
-            sleep(1);
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
         std::cout << "detached XDP program from " << args->interface << '\n';
