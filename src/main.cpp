@@ -78,8 +78,7 @@ int main(int argc, char** argv)
     try {
         set_memory_limit();
         int ifindex = get_interface_index(args->interface);
-        BpfProgram bpf_program;
-        bpf_program.configure(config);
+        BpfProgram bpf_program { config };
         bpf_program.attach_xdp(ifindex, args->interface);
 
         std::cout << "attached XDP program to " << args->interface << '\n';

@@ -10,7 +10,7 @@ private:
     std::string interface_name;
 
 public:
-    BpfProgram();
+    explicit BpfProgram(const knock_config& config);
     ~BpfProgram();
 
     BpfProgram(const BpfProgram&) = delete;
@@ -18,6 +18,5 @@ public:
     BpfProgram(BpfProgram&&) = delete;
     BpfProgram& operator=(BpfProgram&&) = delete;
 
-    void configure(const knock_config& config);
     void attach_xdp(int ifindex, const std::string& interface);
 };
