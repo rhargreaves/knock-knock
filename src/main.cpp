@@ -81,15 +81,13 @@ static void print_config(const struct knock_config& config)
     std::cout << "Timeout: " << config.seq.timeout_ms << " ms\n";
 }
 
-static bool set_memory_limit()
+static void set_memory_limit()
 {
     struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
     if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
-        std::cerr << "Failed to set memory lock limit: " << std::system_category().message(errno)
-                  << '\n';
-        return false;
+        throw std::runtime_error(
+            "Failed to set memory lock limit: " + std::system_category().message(errno));
     }
-    return true;
 }
 
 static void parse_config(const cli_args& args, struct knock_config& config)
@@ -118,16 +116,12 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    if (!set_memory_limit()) {
-        return EXIT_FAILURE;
-    }
-
     struct knock_config config;
     parse_config(*args, config);
     print_config(config);
 
     try {
-
+        set_memory_limit();
         BpfProgram bpf_program;
         bpf_program.configure(config);
         bpf_program.attach_xdp(ifindex, args->interface);
