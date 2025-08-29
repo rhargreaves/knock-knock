@@ -1,4 +1,5 @@
 #include <bpf/libbpf.h>
+#include <cstdlib>
 #include <net/if.h>
 #include <string>
 #include <sys/resource.h>
@@ -8,8 +9,8 @@
 #include <vector>
 #include <optional>
 #include <CLI/CLI.hpp>
-#include "knock.skel.h"
 #include "knock.h"
+#include "bpf_program.cpp"
 
 static volatile sig_atomic_t keep_running = 1;
 
@@ -80,6 +81,17 @@ static void print_config(const struct knock_config& config)
     std::cout << "Timeout: " << config.seq.timeout_ms << " ms\n";
 }
 
+static bool set_memory_limit()
+{
+    struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
+    if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
+        std::cerr << "Failed to set memory lock limit: " << std::system_category().message(errno)
+                  << '\n';
+        return false;
+    }
+    return true;
+}
+
 int main(int argc, char** argv)
 {
     signal(SIGINT, signal_handler);
@@ -96,60 +108,44 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    struct knock_config config = { 0 };
-    config.target_port = args->target_port;
-    config.seq.length = args->sequence.size();
-    config.seq.timeout_ms = args->timeout;
-    for (size_t i = 0; i < args->sequence.size(); i++) {
-        config.seq.ports[i] = args->sequence[i];
-    }
-    print_config(config);
-
-    struct rlimit r = { RLIM_INFINITY, RLIM_INFINITY };
-    if (setrlimit(RLIMIT_MEMLOCK, &r) != 0) {
-        std::cerr << "Failed to set memory lock limit: " << std::system_category().message(errno)
-                  << '\n';
+    if (!set_memory_limit()) {
         return EXIT_FAILURE;
     }
 
-    knock_bpf* skel = knock_bpf__open();
-    if (!skel) {
-        std::cerr << "Failed to open BPF skeleton\n";
+    try {
+        BpfProgram bpf_program;
+
+        struct knock_config config = { 0 };
+        config.target_port = args->target_port;
+        config.seq.length = args->sequence.size();
+        config.seq.timeout_ms = args->timeout;
+        for (size_t i = 0; i < args->sequence.size(); i++) {
+            config.seq.ports[i] = args->sequence[i];
+        }
+        print_config(config);
+
+        if (!bpf_program.configure(config)) {
+            std::cerr << "Failed to update configuration\n";
+            return EXIT_FAILURE;
+        }
+
+        if (!bpf_program.attach_xdp(ifindex, args->interface)) {
+            std::cerr << "Failed to attach XDP program\n";
+            return EXIT_FAILURE;
+        }
+
+        std::cout << "Attached XDP program to " << args->interface << '\n';
+        std::cout << "Waiting for packets (Ctrl+C to exit)...\n";
+
+        while (keep_running) {
+            sleep(1);
+        }
+
+        std::cout << "Detached XDP program from " << args->interface << '\n';
+        return EXIT_SUCCESS;
+
+    } catch (const std::exception& e) {
+        std::cerr << "BPF error: " << e.what() << '\n';
         return EXIT_FAILURE;
     }
-
-    if (knock_bpf__load(skel) != 0) {
-        std::cerr << "Failed to load BPF program\n";
-        knock_bpf__destroy(skel);
-        return EXIT_FAILURE;
-    }
-
-    const __u32 key = 0;
-    if (bpf_map__update_elem(skel->maps.config_map, &key, sizeof(key), &config, sizeof(config), 0)
-        != 0) {
-        std::cerr << "Failed to update configuration\n";
-        knock_bpf__destroy(skel);
-        return EXIT_FAILURE;
-    }
-
-    bpf_link* link = bpf_program__attach_xdp(skel->progs.knock, ifindex);
-    if (!link) {
-        std::cerr << "Failed to attach XDP program\n";
-        knock_bpf__destroy(skel);
-        return EXIT_FAILURE;
-    }
-
-    std::cout << "Attached XDP program to " << args->interface << '\n';
-    std::cout << "Waiting for packets (Ctrl+C to exit)...\n";
-
-    while (keep_running) {
-        sleep(1);
-    }
-
-    bpf_link__destroy(link);
-    knock_bpf__destroy(skel);
-
-    std::cout << "Detached XDP program from " << args->interface << '\n';
-
-    return EXIT_SUCCESS;
 }
