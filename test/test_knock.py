@@ -1,7 +1,12 @@
 import time
 
 import pytest
-from conftest import DEFAULT_KNOCK_SEQUENCE, DEFAULT_TARGET_PORT, wait_for_trace
+from conftest import (
+    DEFAULT_KNOCK_SEQUENCE,
+    DEFAULT_TARGET_PORT,
+    clear_trace,
+    wait_for_trace,
+)
 from utils.net import (
     port_closed,
     port_closed_from_ip,
@@ -146,7 +151,7 @@ def test_port_filtered_when_wrong_code_udp_packet_sent_with_timeout(loader):
     ],
     indirect=True,
 )
-def test_port_filtered_when_wrong_code_udp_packet_sent_with_session_timeout(loader):
+def test_port_filtered_when_session_timeout_reached(loader):
     config, _ = loader
     send_udp_packet(DST_IP, config["knock_sequence"][0])
     assert wait_for_trace("info: code 1 passed")
@@ -156,3 +161,19 @@ def test_port_filtered_when_wrong_code_udp_packet_sent_with_session_timeout(load
     time.sleep(1)
     assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
     assert wait_for_trace("info: session timed out")
+
+
+@pytest.mark.parametrize(
+    "loader", [{"knock_sequence": [111], "extra_args": ["-s", "500"]}], indirect=True
+)
+def test_port_filtered_and_sequence_reset_when_session_timeout_reached(loader):
+    config, _ = loader
+    send_udp_packet(DST_IP, config["knock_sequence"][0])
+    assert port_closed(DST_IP, DEFAULT_TARGET_PORT)
+    time.sleep(1)
+    assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
+    assert wait_for_trace("info: session timed out")
+    clear_trace()
+
+    send_udp_packet(DST_IP, config["knock_sequence"][0])
+    assert wait_for_trace("info: code 1 passed")

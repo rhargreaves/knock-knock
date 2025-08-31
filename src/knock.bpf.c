@@ -85,6 +85,7 @@ static __always_inline int handle_tcp(u32 source_ip, u16 port, u16 target_port, 
         const __u64 current_time = bpf_ktime_get_ns();
         if (current_time - state->last_packet_time > MS_TO_NS(session_timeout)) {
             log_info("session timed out");
+            bpf_map_delete_elem(&ip_tracking_map, &source_ip);
             return XDP_DROP;
         }
 

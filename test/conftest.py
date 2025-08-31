@@ -73,3 +73,7 @@ trace_buffer = TraceBuffer()
 def wait_for_trace(pattern):
     """Wait for a pattern in the trace buffer"""
     return trace_buffer.wait_for_pattern(pattern)
+
+
+def clear_trace():
+    trace_buffer.clear()
