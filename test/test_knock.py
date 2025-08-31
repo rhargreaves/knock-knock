@@ -121,7 +121,11 @@ def test_port_filtered_when_wrong_code_udp_packet_sent():
     assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
 
 
-@pytest.mark.parametrize("loader", [{"extra_args": ["-t", "500"]}], indirect=True)
+@pytest.mark.parametrize(
+    "loader",
+    [{"extra_args": ["-t", "500"]}, {"extra_args": ["--timeout", "500"]}],
+    indirect=True,
+)
 def test_port_filtered_when_wrong_code_udp_packet_sent_with_timeout(loader):
     send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[0])
     assert wait_for_trace("info: code 1 passed")
@@ -132,3 +136,23 @@ def test_port_filtered_when_wrong_code_udp_packet_sent_with_timeout(loader):
     assert wait_for_trace("info: sequence timeout")
 
     assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
+
+
+@pytest.mark.parametrize(
+    "loader",
+    [
+        {"knock_sequence": [111], "extra_args": ["-s", "500"]},
+        {"knock_sequence": [111], "extra_args": ["--session-timeout", "500"]},
+    ],
+    indirect=True,
+)
+def test_port_filtered_when_wrong_code_udp_packet_sent_with_session_timeout(loader):
+    config, _ = loader
+    send_udp_packet(DST_IP, config["knock_sequence"][0])
+    assert wait_for_trace("info: code 1 passed")
+    assert wait_for_trace("info: sequence complete")
+
+    assert port_closed(DST_IP, DEFAULT_TARGET_PORT)
+    time.sleep(1)
+    assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
+    assert wait_for_trace("info: session timed out")

@@ -33,6 +33,9 @@ std::optional<cli_args> parse_args(int argc, char** argv)
     app.add_option("-t,--timeout", args.timeout, "Sequence timeout in milliseconds")
         ->default_val(5000);
 
+    app.add_option("-s,--session-timeout", args.session_timeout, "Session timeout in milliseconds")
+        ->default_val(60000);
+
     try {
         app.parse(argc, argv);
     } catch (const CLI::ParseError& e) {

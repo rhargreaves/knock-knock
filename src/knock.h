@@ -22,4 +22,5 @@ struct ip_state {
 struct knock_config {
     __u16 target_port;
     struct port_sequence seq;
+    __u64 session_timeout;
 };

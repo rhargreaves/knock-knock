@@ -30,7 +30,8 @@ static void print_config(const struct knock_config& config)
         std::cout << port << ' ';
     }
     std::cout << '\n';
-    std::cout << "timeout: " << config.seq.timeout_ms << " ms\n";
+    std::cout << "sequence timeout: " << config.seq.timeout_ms << " ms\n";
+    std::cout << "session timeout: " << config.session_timeout << " ms\n";
 }
 
 static void set_memory_limit()
@@ -59,6 +60,7 @@ static void parse_config(const cli_args& args, struct knock_config& config)
     for (size_t i = 0; i < args.sequence.size(); i++) {
         config.seq.ports[i] = static_cast<__u16>(args.sequence[i]);
     }
+    config.session_timeout = static_cast<__u64>(args.session_timeout);
 }
 
 int main(int argc, char** argv)

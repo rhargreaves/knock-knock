@@ -65,7 +65,7 @@ static __always_inline int handle_udp_knock(
     return XDP_PASS;
 }
 
-static __always_inline int handle_tcp(u32 source_ip, u16 port, u16 target_port)
+static __always_inline int handle_tcp(u32 source_ip, u16 port, u16 target_port, u64 session_timeout)
 {
     if (port != target_port) {
         return XDP_PASS;
@@ -81,6 +81,13 @@ static __always_inline int handle_tcp(u32 source_ip, u16 port, u16 target_port)
     }
 
     if (state->sequence_complete) {
+
+        const __u64 current_time = bpf_ktime_get_ns();
+        if (current_time - state->last_packet_time > MS_TO_NS(session_timeout)) {
+            log_info("session timed out");
+            return XDP_DROP;
+        }
+
         log_info("allowing packet because sequence is complete");
         return XDP_PASS;
     }
@@ -105,7 +112,7 @@ int knock(struct xdp_md* ctx)
     case IPPROTO_UDP:
         return handle_udp_knock(source_ip, port, &config->seq);
     case IPPROTO_TCP:
-        return handle_tcp(source_ip, port, config->target_port);
+        return handle_tcp(source_ip, port, config->target_port, config->session_timeout);
     }
 
     return XDP_PASS;
