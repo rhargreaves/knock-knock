@@ -35,7 +35,22 @@ make build
 make test
 ```
 
-## Example Usage
+## Usage
+
+Run as root:
+
+```
+# build/knock <interface> <target_port> <sequence> <options>
+```
+
+* `interface`: Network interface to attach to (e.g., eth0, lo)
+* `target_port`: Port to protect
+* `sequence`: Knock sequence ports (space-separated)
+* `options`: Optional arguments:
+  * `-t`, `--timeout`: Sequence timeout in milliseconds
+  * `-s`, `--session-timeout`: Session timeout in milliseconds
+
+## Examples
 
 ### Example 1
 
@@ -45,7 +60,7 @@ make test
 * Session timeout is 60 seconds (default)
 
 ```sh
-sudo build/knock eth0 8080 123 456 789
+# build/knock eth0 8080 123 456 789
 ```
 
 ### Example 2
@@ -56,11 +71,11 @@ sudo build/knock eth0 8080 123 456 789
 * Session timeout is 1 hour
 
 ```sh
-sudo build/knock eth0 8080 1111 2222 3333 4444 -t 5000 -s 3600000
+# build/knock eth0 8080 1111 2222 3333 4444 -t 5000 -s 3600000
 ```
 
 ### Help
 
 ```sh
-sudo build/knock --help
+# build/knock --help
 ```
