@@ -40,7 +40,7 @@ make test
 Run as root:
 
 ```
-# build/knock <interface> <target_port> <sequence> <options>
+build/knock <interface> <target_port> <sequence> <options>
 ```
 
 * `interface`: Network interface to attach to (e.g., eth0, lo)
@@ -49,6 +49,8 @@ Run as root:
 * `options`: Optional arguments:
   * `-t`, `--timeout`: Sequence timeout in milliseconds
   * `-s`, `--session-timeout`: Session timeout in milliseconds
+
+Use `--help` to see all options.
 
 ## Examples
 
@@ -60,7 +62,7 @@ Run as root:
 * Session timeout is 60 seconds (default)
 
 ```sh
-# build/knock eth0 8080 123 456 789
+build/knock eth0 8080 123 456 789
 ```
 
 ### Example 2
@@ -71,11 +73,5 @@ Run as root:
 * Session timeout is 1 hour
 
 ```sh
-# build/knock eth0 8080 1111 2222 3333 4444 -t 5000 -s 3600000
-```
-
-### Help
-
-```sh
-# build/knock --help
+build/knock eth0 8080 1111 2222 3333 4444 -t 5000 -s 3600000
 ```
