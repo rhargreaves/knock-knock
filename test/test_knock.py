@@ -143,6 +143,21 @@ def test_port_filtered_when_wrong_code_udp_packet_sent_with_timeout(loader):
     assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
 
 
+@pytest.mark.parametrize("loader", [{"extra_args": ["-t", "500"]}], indirect=True)
+def test_sequence_timeout_resets_sequence(loader):
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[0])
+    assert wait_for_trace("info: code 1 passed")
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[1])
+    assert wait_for_trace("info: code 2 passed")
+    time.sleep(1)
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[2])
+    assert wait_for_trace("info: sequence timeout")
+    clear_trace()
+
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[0])
+    assert wait_for_trace("info: code 1 passed")
+
+
 @pytest.mark.parametrize(
     "loader",
     [
