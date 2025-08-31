@@ -25,8 +25,16 @@ struct {
     __type(value, __u16);
 } target_port_map SEC(".maps");
 
+#define DEBUG FALSE
+
 #define log_info(fmt, ...) bpf_printk("info: " fmt, ##__VA_ARGS__)
 #define log_error(fmt, ...) bpf_printk("error: " fmt, ##__VA_ARGS__)
+#if DEBUG
 #define log_debug(fmt, ...) bpf_printk("debug: " fmt, ##__VA_ARGS__)
+#else
+#define log_debug(fmt, ...)                                                                        \
+    do {                                                                                           \
+    } while (0)
+#endif
 
 #define MS_TO_NS(ms) (ms * 1000000)

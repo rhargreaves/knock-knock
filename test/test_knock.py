@@ -33,7 +33,6 @@ def test_port_filtered_by_default(loader):
     config, _ = loader
 
     assert port_filtered(DST_IP, config["target_port"])
-    assert wait_for_trace(f"debug: tcp port: {config['target_port']}")
 
 
 @pytest.mark.usefixtures("loader")

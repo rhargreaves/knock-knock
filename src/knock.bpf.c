@@ -77,7 +77,7 @@ static __always_inline int handle_tcp(u32 source_ip, u16 port, u16 target_port, 
 
     struct ip_state* state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
     if (!state) {
-        log_info("dropping packet because state is not found");
+        log_debug("dropping packet because state is not found");
         return XDP_DROP;
     }
 
@@ -88,9 +88,12 @@ static __always_inline int handle_tcp(u32 source_ip, u16 port, u16 target_port, 
             bpf_map_delete_elem(&ip_tracking_map, &source_ip);
             return XDP_DROP;
         }
+
+        log_debug("allowing packet because sequence is complete");
         return XDP_PASS;
     }
 
+    log_debug("dropping packet because sequence is not complete");
     return XDP_DROP;
 }
 
