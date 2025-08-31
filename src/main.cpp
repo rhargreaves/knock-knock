@@ -84,7 +84,7 @@ int main(int argc, char** argv)
         bpf_program.attach_xdp(ifindex, args->interface);
 
         std::cout << "attached XDP program to " << args->interface << '\n';
-        std::cout << "waiting for packets (Ctrl+C to exit)...\n";
+        std::cout << "press Ctrl+C to unload & exit...\n";
 
         while (keep_running) {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
