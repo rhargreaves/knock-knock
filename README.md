@@ -75,3 +75,11 @@ build/knock eth0 8080 123 456 789
 ```sh
 build/knock eth0 8080 1111 2222 3333 4444 -t 5000 -s 3600000
 ```
+
+## Logging
+
+Program logs various events to the kernel trace buffer. To view the trace, run (as root):
+
+```sh
+cat /sys/kernel/debug/tracing/trace_pipe
+```
