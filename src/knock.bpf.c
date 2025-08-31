@@ -88,12 +88,9 @@ static __always_inline int handle_tcp(u32 source_ip, u16 port, u16 target_port, 
             bpf_map_delete_elem(&ip_tracking_map, &source_ip);
             return XDP_DROP;
         }
-
-        log_info("allowing packet because sequence is complete");
         return XDP_PASS;
     }
 
-    log_info("dropping packet because sequence is not complete");
     return XDP_DROP;
 }
 
