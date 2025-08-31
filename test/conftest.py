@@ -23,11 +23,14 @@ def require_root():
 
 @pytest.fixture()
 def loader(request):
-    config = getattr(
-        request,
-        "param",
-        {"target_port": DEFAULT_TARGET_PORT, "knock_sequence": DEFAULT_KNOCK_SEQUENCE},
-    )
+    defaults = {
+        "target_port": DEFAULT_TARGET_PORT,
+        "knock_sequence": DEFAULT_KNOCK_SEQUENCE,
+        "extra_args": [],
+    }
+
+    user_params = getattr(request, "param", {})
+    config = {**defaults, **user_params}
 
     bin_path = os.path.abspath(os.path.join(os.getcwd(), "build", "knock"))
     if not os.path.exists(bin_path):
@@ -42,6 +45,7 @@ def loader(request):
             "lo",
             str(config["target_port"]),
             *map(str, config["knock_sequence"]),
+            *config["extra_args"],
         ],
         text=True,
         stderr=subprocess.PIPE,

@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from conftest import DEFAULT_KNOCK_SEQUENCE, DEFAULT_TARGET_PORT, wait_for_trace
 from utils.net import (
@@ -115,5 +117,18 @@ def test_ports_closed_when_correct_codes_sent_from_multiple_ips():
 @pytest.mark.usefixtures("loader")
 def test_port_filtered_when_wrong_code_udp_packet_sent():
     send_udp_packet(DST_IP, WRONG_CODE)
+
+    assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
+
+
+@pytest.mark.parametrize("loader", [{"extra_args": ["-t", "500"]}], indirect=True)
+def test_port_filtered_when_wrong_code_udp_packet_sent_with_timeout(loader):
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[0])
+    assert wait_for_trace("info: code 1 passed")
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[1])
+    assert wait_for_trace("info: code 2 passed")
+    time.sleep(1)
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[2])
+    assert wait_for_trace("info: sequence timeout")
 
     assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)

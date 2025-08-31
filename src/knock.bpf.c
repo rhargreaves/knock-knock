@@ -24,8 +24,9 @@ static __always_inline int handle_udp_knock(
     log_debug("source ip: %d", source_ip);
     log_debug("udp port: %d", port);
 
-    struct ip_state new_state
-        = { .sequence_step = 0, .last_packet_time = 0, .sequence_complete = false };
+    struct ip_state new_state = {
+        .sequence_step = 0, .last_packet_time = bpf_ktime_get_ns(), .sequence_complete = false
+    };
     struct ip_state* existing_state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
     struct ip_state* state = existing_state != NULL ? existing_state : &new_state;
 
@@ -40,8 +41,15 @@ static __always_inline int handle_udp_knock(
     }
 
     if (port == seq->ports[state->sequence_step]) {
+
+        const __u64 current_time = bpf_ktime_get_ns();
+        if (current_time - state->last_packet_time > MS_TO_NS(seq->timeout_ms)) {
+            log_info("sequence timeout");
+            return XDP_PASS;
+        }
+
         state->sequence_step++;
-        state->last_packet_time = bpf_ktime_get_ns();
+        state->last_packet_time = current_time;
         state->sequence_complete = (state->sequence_step == seq->length);
 
         log_info("code %d passed", state->sequence_step);

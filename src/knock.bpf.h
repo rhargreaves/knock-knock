@@ -28,3 +28,5 @@ struct {
 #define log_info(fmt, ...) bpf_printk("info: " fmt, ##__VA_ARGS__)
 #define log_error(fmt, ...) bpf_printk("error: " fmt, ##__VA_ARGS__)
 #define log_debug(fmt, ...) bpf_printk("debug: " fmt, ##__VA_ARGS__)
+
+#define MS_TO_NS(ms) (ms * 1000000)
