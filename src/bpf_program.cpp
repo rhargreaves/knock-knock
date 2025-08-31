@@ -1,7 +1,8 @@
 #include "bpf_program.hpp"
 #include "bpf_error.hpp"
 
-static void configure_bpf_program(knock_bpf* skel, const knock_config& config)
+static void configure_bpf_program(
+    const std::unique_ptr<knock_bpf, void (*)(knock_bpf*)>& skel, const knock_config& config)
 {
     const __u32 key = 0;
     if (bpf_map__update_elem(skel->maps.config_map, &key, sizeof(key), &config, sizeof(config), 0)
@@ -10,9 +11,9 @@ static void configure_bpf_program(knock_bpf* skel, const knock_config& config)
     }
 }
 
-static void load_bpf_program(knock_bpf* skel)
+static void load_bpf_program(const std::unique_ptr<knock_bpf, void (*)(knock_bpf*)>& skel)
 {
-    if (knock_bpf__load(skel) != 0) {
+    if (knock_bpf__load(skel.get()) != 0) {
         throw BpfError("Failed to load BPF program");
     }
 }
@@ -27,13 +28,11 @@ static void load_bpf_program(knock_bpf* skel)
 }
 
 BpfProgram::BpfProgram(const knock_config& config)
+    : skel(open_bpf_program(), knock_bpf__destroy)
 {
-    skel.reset(open_bpf_program());
-    load_bpf_program(skel.get());
-    configure_bpf_program(skel.get(), config);
+    load_bpf_program(skel);
+    configure_bpf_program(skel, config);
 }
-
-BpfProgram::~BpfProgram() = default;
 
 void BpfProgram::attach_xdp(int ifindex, const std::string& interface)
 {
