@@ -2,12 +2,14 @@ import pytest
 from conftest import DEFAULT_KNOCK_SEQUENCE, DEFAULT_TARGET_PORT, wait_for_trace
 from utils.net import (
     port_closed,
+    port_closed_from_ip,
     port_filtered,
     send_udp_packet,
     send_udp_packet_from_ip,
 )
 
 DST_IP = "127.0.0.1"
+ALT_SRC_IP = "127.0.0.5"
 WRONG_CODE = 4444
 
 
@@ -82,9 +84,32 @@ def test_port_filtered_when_only_one_code_udp_packet_sent():
 
 @pytest.mark.usefixtures("loader")
 def test_port_filtered_when_correct_code_udp_packet_sent_from_wrong_ip():
-    send_udp_packet_from_ip(DST_IP, DEFAULT_KNOCK_SEQUENCE[0], "127.0.0.5")
+    send_udp_packet_from_ip(DST_IP, DEFAULT_KNOCK_SEQUENCE[0], ALT_SRC_IP)
 
     assert port_filtered(DST_IP, DEFAULT_TARGET_PORT)
+
+
+@pytest.mark.usefixtures("loader")
+def test_ports_closed_when_correct_codes_sent_from_multiple_ips():
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[0])
+    assert wait_for_trace("info: code 1 passed")
+    send_udp_packet_from_ip(DST_IP, DEFAULT_KNOCK_SEQUENCE[0], ALT_SRC_IP)
+    assert wait_for_trace("info: code 1 passed")
+
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[1])
+    assert wait_for_trace("info: code 2 passed")
+    send_udp_packet_from_ip(DST_IP, DEFAULT_KNOCK_SEQUENCE[1], ALT_SRC_IP)
+    assert wait_for_trace("info: code 2 passed")
+
+    send_udp_packet(DST_IP, DEFAULT_KNOCK_SEQUENCE[2])
+    assert wait_for_trace("info: code 3 passed")
+    assert wait_for_trace("info: sequence complete")
+    send_udp_packet_from_ip(DST_IP, DEFAULT_KNOCK_SEQUENCE[2], ALT_SRC_IP)
+    assert wait_for_trace("info: code 3 passed")
+    assert wait_for_trace("info: sequence complete")
+
+    assert port_closed(DST_IP, DEFAULT_TARGET_PORT)
+    assert port_closed_from_ip(DST_IP, DEFAULT_TARGET_PORT, ALT_SRC_IP)
 
 
 @pytest.mark.usefixtures("loader")

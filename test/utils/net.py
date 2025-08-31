@@ -1,5 +1,7 @@
 import socket
 
+DEFAULT_SRC_IP = "127.0.0.1"
+
 
 def send_udp_packet(dst, port):
     print(f"Sending UDP packet to {dst}:{port}")
@@ -22,8 +24,9 @@ def send_udp_packet_from_ip(dst, port, src_ip):
         sock.close()
 
 
-def port_closed(dst, port):
+def port_closed_from_ip(dst, port, src_ip):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind((src_ip, 0))
     sock.settimeout(0.5)
     try:
         sock.connect((dst, port))
@@ -32,6 +35,10 @@ def port_closed(dst, port):
         return True
     finally:
         sock.close()
+
+
+def port_closed(dst, port):
+    return port_closed_from_ip(dst, port, DEFAULT_SRC_IP)
 
 
 def port_filtered(dst, port):
