@@ -3,6 +3,19 @@
 
 Port knocking implementation in eBPF
 
+## Features
+
+* Protects TCP ports using port knocking, dropping packets until the correct sequence of UDP packets is received
+* A sequence of up to 10 UDP packets can be used to protect a port
+* Configurable sequence timeout resets the sequence after a period of time
+* Configurable session timeout resets the session (blocks packets again) after a period of time
+
+## Components
+
+* Kernel-space BPF program (`knock.bpf.c` et al)
+* User-space BPF program loader & configurator CLI tool (`main.cpp` et al)
+* Acceptance tests (`test_knock.py` et al)
+
 ## Getting Started
 
 Use the Dev Container as the main development environment.
@@ -22,28 +35,32 @@ make build
 make test
 ```
 
+## Example Usage
+
+### Example 1
+
+* Attach to interface `eth0`
+* Protect port 8080 with a sequence of 123, 456, 789
+* Sequence timeout is 5 seconds (default)
+* Session timeout is 60 seconds (default)
+
+```sh
+sudo build/knock eth0 8080 123 456 789
+```
+
+### Example 2
+
+* Attach to interface `eth0`
+* Protect port 8080 with a sequence of 1111, 2222, 3333, 4444
+* Sequence timeout is 5 seconds
+* Session timeout is 1 hour
+
+```sh
+sudo build/knock eth0 8080 1111 2222 3333 4444 -t 5000 -s 3600000
+```
+
 ### Help
 
-```
-$ build/knock --help
-
-Knock Knock 👊👊🚪
-Port knocking implemention in eBPF
-
-
-build/knock [OPTIONS] interface target_port sequence...
-
-
-POSITIONALS:
-  interface TEXT REQUIRED     Network interface to monitor (e.g., eth0, lo)
-  target_port UINT:INT in [1 - 65535] REQUIRED
-                              Target port to protect
-  sequence UINT:INT in [1 - 65535] ... REQUIRED
-                              Knock sequence ports (space-separated)
-
-OPTIONS:
-  -h,     --help              Print this help message and exit
-          --version           Display program version information and exit
-  -t,     --timeout UINT [5000]
-                              Sequence timeout in milliseconds
+```sh
+sudo build/knock --help
 ```
