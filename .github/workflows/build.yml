@@ -17,3 +17,27 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           runCmd: make test
+
+  release:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build
+        uses: devcontainers/ci@v0.3
+        with:
+          runCmd: make build
+        env:
+          VERSION: ${{ github.ref_name }}
+
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          draft: true
+          files: build/knock

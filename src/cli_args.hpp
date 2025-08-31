@@ -13,3 +13,7 @@ struct cli_args {
 };
 
 std::optional<cli_args> parse_args(int argc, char** argv);
+
+#ifndef BUILD_VERSION
+#define BUILD_VERSION "dev"
+#endif

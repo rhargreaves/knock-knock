@@ -1,13 +1,11 @@
 .SHELL := /bin/bash
 .ONESHELL:
 
+VERSION ?= $(shell git describe --tags --always)
 LIBBPF_A := deps/libbpf/src/libbpf.a
 CLI11_INCLUDE := deps/CLI11/include
-
-# PYTEST_ARGS := --capture=no
 PYTEST_ARGS :=
 PIP_ARGS := --disable-pip-version-check -q
-
 SRC_FILES := src/main.cpp src/bpf_program.cpp src/cli_args.cpp
 
 src/vmlinux.h:
@@ -22,17 +20,13 @@ src/knock.skel.h: src/knock.bpf.o
 
 build: src/knock.skel.h $(LIBBPF_A)
 	mkdir -p build
-	clang++ -g -O2 -Werror -Isrc -I$(CLI11_INCLUDE) -o build/knock $(SRC_FILES) \
+	clang++ -g -O2 -DBUILD_VERSION=\"$(VERSION)\" -Werror -Isrc -I$(CLI11_INCLUDE) -o build/knock $(SRC_FILES) \
 		$(LIBBPF_A) -lelf -lz
 .PHONY: build
 
 load-bpf:
 	sudo bpftool prog load src/knock.bpf.o /sys/fs/bpf/knock
 .PHONY: load-bpf
-
-run:
-	sudo build/knock lo 8080 123 456 789
-.PHONY: run
 
 lint-tests:
 	source .venv/bin/activate

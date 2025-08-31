@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 
-static constexpr std::string_view VERSION = "1.0.0";
+static constexpr std::string_view VERSION = BUILD_VERSION;
 
 std::optional<cli_args> parse_args(int argc, char** argv)
 {
