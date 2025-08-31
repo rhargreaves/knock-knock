@@ -19,6 +19,9 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           runCmd: make test
+          push: never
+        env:
+          VERSION: ${{ github.ref_name }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -40,6 +43,7 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           runCmd: make build
+          push: never
         env:
           VERSION: ${{ github.ref_name }}
 
