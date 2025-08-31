@@ -43,7 +43,7 @@ Run as root:
 build/knock <interface> <target_port> <sequence> <options>
 ```
 
-* `interface`: Network interface to attach to (e.g., eth0, lo)
+* `interface`: Network interface to attach to (e.g., `eth0`, `lo`)
 * `target_port`: Port to protect
 * `sequence`: Knock sequence ports (space-separated)
 * `options`: Optional arguments:
