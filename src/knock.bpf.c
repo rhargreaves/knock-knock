@@ -21,14 +21,7 @@ static __always_inline const struct knock_config* get_and_validate_config(struct
 static __always_inline int handle_udp_knock(
     u32 source_ip, u16 port, const struct port_sequence* seq)
 {
-    log_debug("source ip: %d", source_ip);
-    log_debug("udp port: %d", port);
-
-    struct ip_state new_state = {
-        .sequence_step = 0, .last_packet_time = bpf_ktime_get_ns(), .sequence_complete = false
-    };
-    struct ip_state* existing_state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
-    struct ip_state* state = existing_state != NULL ? existing_state : &new_state;
+    struct ip_state* state = bpf_map_lookup_elem(&ip_tracking_map, &source_ip);
 
     if (state->sequence_step >= seq->length) {
         log_error("sequence step > length");
@@ -41,26 +34,7 @@ static __always_inline int handle_udp_knock(
     }
 
     if (port == seq->ports[state->sequence_step]) {
-
-        const __u64 current_time = bpf_ktime_get_ns();
-        if (current_time - state->last_packet_time > MS_TO_NS(seq->timeout_ms)) {
-            log_info("sequence timeout");
-            bpf_map_delete_elem(&ip_tracking_map, &source_ip);
-            return XDP_PASS;
-        }
-
-        state->sequence_step++;
-        state->last_packet_time = current_time;
-        state->sequence_complete = (state->sequence_step == seq->length);
-
-        log_info("code %d passed", state->sequence_step);
-        if (state->sequence_complete) {
-            log_info("sequence complete");
-        }
-        bpf_map_update_elem(&ip_tracking_map, &source_ip, state, BPF_ANY);
-    } else if (existing_state) {
-        log_info("sequence reset");
-        bpf_map_delete_elem(&ip_tracking_map, &source_ip);
+        log_info("doing something useful here...");
     }
 
     return XDP_PASS;
